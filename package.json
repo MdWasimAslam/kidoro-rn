@@ -1,18 +1,61 @@
 {
-  "name": "kidora",
+  "name": "kidoro",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/",
+    "audit": "npm audit --production",
+    "qa": "npm run lint && npm run test && npm run audit",
+    "verify": "npm run lint && npm run test && npx expo export --platform web --output-dir /tmp/kidoro-verify",
+    "performance": "npx expo export --platform web --output-dir /tmp/kidoro-perf",
+    "release-check": "npm run verify && npm run audit"
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.0.3",
+    "@react-native-async-storage/async-storage": "^3.1.1",
+    "@react-navigation/bottom-tabs": "^7.18.13",
+    "@react-navigation/elements": "^2.9.35",
+    "@react-navigation/native": "^7.3.13",
+    "@react-navigation/native-stack": "^7.18.5",
+    "babel-preset-expo": "~54.0.10",
     "expo": "~54.0.35",
+    "expo-alternate-app-icons": "^8.0.0",
+    "expo-av": "^16.0.8",
+    "expo-linear-gradient": "~15.0.8",
     "expo-status-bar": "~3.0.9",
+    "expo-video": "~3.0.16",
     "react": "19.1.0",
-    "react-native": "0.81.5"
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-gesture-handler": "~2.28.0",
+    "react-native-reanimated": "~4.1.1",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-web": "^0.21.0",
+    "react-native-web-webview": "^1.0.2",
+    "react-native-webview": "^13.15.0",
+    "react-native-worklets": "^0.5.1",
+    "react-native-youtube-iframe": "^2.4.1"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^14.0.1",
+    "babel-jest": "^30.4.1",
+    "eslint": "^8.57.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "jest": "~29.7.0",
+    "jest-expo": "~54.0.17",
+    "react-test-renderer": "^19.2.8",
+    "sharp": "^0.35.3"
+  }
 }

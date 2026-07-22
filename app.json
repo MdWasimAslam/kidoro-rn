@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Kidora",
-    "slug": "Kidora",
+    "name": "Kidoro",
+    "slug": "Kidoro",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#FE6C87"
     },
     "ios": {
       "supportsTablet": true
@@ -18,12 +18,28 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#FE6C87"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.Kidoro"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "YouTubeIcon",
+            "ios": "./assets/icon-youtube.png",
+            "android": {
+              "foregroundImage": "./assets/adaptive-icon-youtube.png",
+              "backgroundColor": "#FFFFFF"
+            }
+          }
+        ]
+      ]
+    ]
   }
 }
