@@ -5,24 +5,25 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SIZES, TYPOGRAPHY, ELEVATION } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 
-const sampleQuizzes = [
-  { id: 'q1', category: 'Space', question: 'Which planet is known as the Red Planet?', options: ['Venus', 'Mars', 'Jupiter', 'Saturn'], answer: 1, explanation: 'Mars looks red because of iron oxide (rust) on its surface!', icon: 'rocket' },
-  { id: 'q2', category: 'Animals', question: 'What is the largest land animal on Earth?', options: ['Giraffe', 'Hippopotamus', 'African Elephant', 'Rhinoceros'], answer: 2, explanation: 'The African Elephant can weigh up to 6,000 kg!', icon: 'paw' },
-  { id: 'q3', category: 'Math', question: 'What is 8 + 7?', options: ['13', '14', '15', '16'], answer: 2, explanation: '8 + 7 = 15! Great math skills!', icon: 'calculator' },
-  { id: 'q4', category: 'Science', question: 'What do plants need to make their food?', options: ['Sunlight & Water', 'Milk & Sugar', 'Pizza & Juice', 'Sand & Rocks'], answer: 0, explanation: 'Plants use sunlight, water, and air in a process called Photosynthesis!', icon: 'flask' },
-];
-
 const GamesScreen = React.memo(function GamesScreen() {
   const insets = useSafeAreaInsets();
   const { colors, statusBarStyle } = useTheme();
+  const [quizzes, setQuizzes] = useState([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedOpt, setSelectedOpt] = useState(null);
-  const [score, setScore] = useState(120);
-  const [streakG, setStreakG] = useState(3);
+  const [score, setScore] = useState(0);
+  const [streakG, setStreakG] = useState(0);
   const [answered, setAnswered] = useState(false);
   const bounceAnim = useRef(new Animated.Value(1)).current;
 
-  const currentQuiz = sampleQuizzes[currentIdx];
+  React.useEffect(() => {
+    const { supabaseRest } = require('../services/api');
+    supabaseRest('quizzes', { select: '*', status: 'eq.active', limit: '20' }).then(data => {
+      if (Array.isArray(data) && data.length > 0) setQuizzes(data);
+    }).catch(() => {});
+  }, []);
+
+  const currentQuiz = quizzes[currentIdx] || null;
   const quizColor = [colors.purple, colors.blue, colors.green, colors.secondaryDark][currentIdx % 4];
 
   const styles = useMemo(() => StyleSheet.create({
@@ -66,7 +67,8 @@ const GamesScreen = React.memo(function GamesScreen() {
     if (answered) return;
     setSelectedOpt(idx);
     setAnswered(true);
-    if (idx === currentQuiz.answer) {
+    const answerIdx = typeof currentQuiz.answer === 'number' ? currentQuiz.answer : parseInt(currentQuiz.answer, 10);
+    if (idx === answerIdx) {
       setScore(prev => prev + 50);
       setStreakG(prev => prev + 1);
       Animated.sequence([
@@ -78,7 +80,7 @@ const GamesScreen = React.memo(function GamesScreen() {
 
   const handleNext = () => {
     setSelectedOpt(null); setAnswered(false);
-    setCurrentIdx((prev) => (prev + 1) % sampleQuizzes.length);
+    setCurrentIdx((prev) => (prev + 1) % quizzes.length);
   };
 
   return (
@@ -104,28 +106,30 @@ const GamesScreen = React.memo(function GamesScreen() {
           <Text style={styles.streakSub}>Keep learning daily to level up your badges!</Text>
         </View>
 
+        {currentQuiz ? (
         <Animated.View style={[styles.quizCard, { transform: [{ scale: bounceAnim }] }]}>
           <View style={styles.categoryHeader}>
             <View style={[styles.iconContainer, { backgroundColor: quizColor + '20' }]}>
-              <MaterialCommunityIcons name={currentQuiz.icon} size={22} color={quizColor} />
+              <MaterialCommunityIcons name="school" size={22} color={quizColor} />
             </View>
-            <Text style={[styles.categoryName, { color: quizColor }]}>{currentQuiz.category} Challenge</Text>
-            <Text style={styles.questionNum}>Q{currentIdx + 1}/{sampleQuizzes.length}</Text>
+            <Text style={[styles.categoryName, { color: quizColor }]}>{currentQuiz.category || 'Quiz'} Challenge</Text>
+            <Text style={styles.questionNum}>Q{currentIdx + 1}/{quizzes.length}</Text>
           </View>
           <Text style={styles.questionText}>{currentQuiz.question}</Text>
           <View style={styles.optionsList}>
-            {currentQuiz.options.map((opt, i) => {
+            {(Array.isArray(currentQuiz.options) ? currentQuiz.options : []).map((opt, i) => {
               let btnStyle = styles.optionBtn;
               let txtStyle = styles.optionText;
+              const answerIdx = typeof currentQuiz.answer === 'number' ? currentQuiz.answer : parseInt(currentQuiz.answer, 10);
               if (answered) {
-                if (i === currentQuiz.answer) { btnStyle = [styles.optionBtn, styles.correctOpt]; txtStyle = [styles.optionText, styles.correctOptText]; }
+                if (i === answerIdx) { btnStyle = [styles.optionBtn, styles.correctOpt]; txtStyle = [styles.optionText, styles.correctOptText]; }
                 else if (i === selectedOpt) { btnStyle = [styles.optionBtn, styles.wrongOpt]; txtStyle = [styles.optionText, styles.wrongOptText]; }
               }
               return (
                 <TouchableOpacity key={i} style={btnStyle} activeOpacity={0.8} onPress={() => handleSelect(i)}>
-                  <Text style={txtStyle}>{opt}</Text>
-                  {answered && i === currentQuiz.answer && <MaterialCommunityIcons name="check-circle" size={20} color={colors.success} />}
-                  {answered && i === selectedOpt && i !== currentQuiz.answer && <MaterialCommunityIcons name="close-circle" size={20} color={colors.error} />}
+                  <Text style={txtStyle}>{typeof opt === 'string' ? opt : opt.text || String(opt)}</Text>
+                  {answered && i === answerIdx && <MaterialCommunityIcons name="check-circle" size={20} color={colors.success} />}
+                  {answered && i === selectedOpt && i !== answerIdx && <MaterialCommunityIcons name="close-circle" size={20} color={colors.error} />}
                 </TouchableOpacity>
               );
             })}
@@ -140,6 +144,12 @@ const GamesScreen = React.memo(function GamesScreen() {
             </View>
           )}
         </Animated.View>
+        ) : (
+          <View style={[styles.quizCard, { alignItems: 'center', padding: SIZES.xxl }]}>
+            <MaterialCommunityIcons name="school-outline" size={48} color={colors.textSecondary} />
+            <Text style={[styles.questionText, { marginTop: SIZES.md, textAlign: 'center' }]}>No quizzes available yet</Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   );

@@ -1,0 +1,21 @@
+const { supabaseRest } = require('./api');
+
+const shortsService = {
+  getShorts: async (limit = 20) => {
+    try {
+      // Contract: shorts table status = active & deleted_at is null
+      return await supabaseRest('shorts', {
+        select: '*',
+        status: 'eq.active',
+        deleted_at: 'is.null',
+        order: 'created_at.desc',
+        limit: limit.toString(),
+      });
+    } catch (e) {
+      console.error('[shortsService.getShorts] Error:', e.message);
+      return [];
+    }
+  },
+};
+
+module.exports = shortsService;

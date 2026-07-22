@@ -5,7 +5,8 @@ import YoutubeIframe from 'react-native-youtube-iframe';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SIZES, TYPOGRAPHY } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
-import { videos } from '../mock/videos';
+import videoService from '../services/video.service';
+import analyticsService from '../services/analytics.service';
 import { useFavoritesContext } from '../context/FavoritesContext';
 import VideoCard from '../components/VideoCard';
 
@@ -56,13 +57,39 @@ const VideoPlayerScreen = React.memo(function VideoPlayerScreen({ route, navigat
   const PLAYER_HEIGHT = width * 0.5625;
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { video } = route.params;
+  const rawVideo = route?.params?.video || null;
   const { isFavorite, toggleFavorite } = useFavoritesContext();
   const [playing, setPlaying] = useState(true);
   const [playerReady, setPlayerReady] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const thumbnailOpacity = useRef(new Animated.Value(1)).current;
-  const [currentVideo, setCurrentVideo] = useState(video);
+  const [currentVideo, setCurrentVideo] = useState(rawVideo);
+  const [suggestedVideos, setSuggestedVideos] = useState([]);
+
+  React.useEffect(() => {
+    let mounted = true;
+    analyticsService.trackEvent({
+      event_name: 'video_started',
+      video_id: currentVideo.id,
+      duration_seconds: 0,
+      completion_pct: 0,
+    });
+
+    videoService.getVideos(10).then(res => {
+      if (mounted && res) {
+        const formatted = res.map(v => ({
+          id: v.id,
+          title: v.title,
+          thumbnail: v.thumbnail_url || `https://img.youtube.com/vi/${v.video_id}/hqdefault.jpg`,
+          youtubeId: v.video_id,
+          category: v.categories?.name || 'General',
+        }));
+        setSuggestedVideos(formatted.filter(v => v.id !== currentVideo.id));
+      }
+    });
+
+    return () => { mounted = false; };
+  }, [currentVideo.id]);
 
   const styles = useMemo(() => StyleSheet.create({
     screen: { flex: 1, backgroundColor: '#000' },
@@ -104,7 +131,6 @@ const VideoPlayerScreen = React.memo(function VideoPlayerScreen({ route, navigat
   };
 
   const favorite = isFavorite(currentVideo.id);
-  const suggestedVideos = videos.filter(v => v.id !== currentVideo.id).slice(0, 6);
 
   const handleFavorite = () => { toggleFavorite(currentVideo.id); };
 
@@ -120,15 +146,17 @@ const VideoPlayerScreen = React.memo(function VideoPlayerScreen({ route, navigat
         <ScrollView showsVerticalScrollIndicator={false} bounces={false} style={styles.scroll}>
           <View style={[styles.playerContainer, { height: PLAYER_HEIGHT + insets.top }]}>
             <View style={[styles.playerArea, { width, height: PLAYER_HEIGHT, marginTop: insets.top }]}>
+              {currentVideo && (
               <YoutubeIframe
-                videoId={currentVideo.youtubeId || 'XqZsoesa55w'}
+                videoId={currentVideo.youtubeId}
                 height={PLAYER_HEIGHT}
                 width={width}
                 play={playing && playerReady}
-                onReady={handlePlayerReady}
+                 onReady={handlePlayerReady}
                 onChangeState={(e) => { if (e === 'ended') setPlaying(false); }}
               />
-              {!playerReady && (
+              )}
+              {currentVideo && !playerReady && (
                 <Animated.View style={[styles.thumbnailOverlay, { opacity: thumbnailOpacity }]} pointerEvents="none">
                   <Image source={{ uri: currentVideo.thumbnail }} style={styles.thumbnailFull} resizeMode="cover" />
                   <View style={{ ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' }}>
@@ -145,9 +173,7 @@ const VideoPlayerScreen = React.memo(function VideoPlayerScreen({ route, navigat
           <View style={styles.infoContainer}>
             <Text style={styles.title}>{currentVideo.title}</Text>
             <View style={styles.metaRow}>
-              <Text style={styles.views}>{currentVideo.views >= 1000000 ? `${(currentVideo.views / 1000000).toFixed(1)}M` : currentVideo.views >= 1000 ? `${(currentVideo.views / 1000).toFixed(0)}K` : currentVideo.views} views</Text>
-              <Text style={styles.dot}>•</Text>
-              <Text style={styles.category}>{currentVideo.category}</Text>
+              <Text style={styles.category}>{currentVideo.category || ''}</Text>
             </View>
 
             <View style={styles.actionRow}>
@@ -161,17 +187,11 @@ const VideoPlayerScreen = React.memo(function VideoPlayerScreen({ route, navigat
               </TouchableOpacity>
             </View>
 
-            <View style={styles.channelRow}>
-              <Image source={{ uri: currentVideo.channelAvatar }} style={styles.channelAvatar} />
-              <View style={styles.channelInfo}>
-                <Text style={styles.channelName}>{currentVideo.channel}</Text>
-                <Text style={styles.channelSubs}>Kidoro Channel</Text>
-              </View>
-            </View>
-
+            {currentVideo.description ? (
             <View style={styles.descriptionBox}>
               <Text style={styles.descriptionText}>{currentVideo.description}</Text>
             </View>
+            ) : null}
           </View>
 
           <View style={styles.suggestedSection}>

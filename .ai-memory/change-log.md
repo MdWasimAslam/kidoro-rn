@@ -1,5 +1,15 @@
 # Change Log
 
+## 2026-07-23 — Removed Default Access Key
+- **Modified**: `src/components/AccessCodeCard.js`, `src/services/child.service.js`
+- **Summary**: Removed hardcoded default PIN `1234` and all fallback validation that accepted arbitrary 4-6 digit codes. Access now requires a genuine access code validated against the Supabase `children` table. Offline mode only accepts a previously cached child session.
+
+## 2026-07-23 — Next.js Admin Backend Integration & Mock Cleanup
+- **Added**: `src/services/api.js`, `auth.service.js`, `child.service.js`, `category.service.js`, `video.service.js`, `shorts.service.js`, `playlist.service.js`, `analytics.service.js`, `reports.service.js`, `search.service.js`, `notification.service.js`, `settings.service.js`
+- **Removed**: Entire `src/mock/` folder (`categories.js`, `profile.js`, `shorts.js`, `videodata.json`, `videos.js`)
+- **Modified**: `HomeScreen.js`, `AccessCodeScreen.js`, `AccessCodeCard.js`, `ShortsScreen.js`, `SearchScreen.js`, `PlaylistsScreen.js`, `FavoritesScreen.js`, `SettingsScreen.js`, `VideoPlayerScreen.js`, `SplashScreen.js`
+- **Summary**: Fully connected mobile app to Next.js API & Supabase REST services. Removed 100% of dummy data. Added offline event queue for analytics. Verified with web build export.
+
 ## 2026-07-22 — Infinite Scroll Home Redesign
 - **Modified**: `src/screens/HomeScreen.js` (rewritten)
 - **Summary**: Replaced 13 horizontal CategoryRow sections with single virtualized FlatList. Header = greeting + search + chips + trending hero + Continue Watching (horizontal). Body = 2-col recommended grid with infinite scroll (onEndReached loads 10 more). Pull-to-refresh reshuffles. Tracks shown IDs to avoid duplicates.
@@ -68,6 +78,10 @@
 ## 2026-07-22 — Full UI Audit & Polish
 - **Modified**: 31+ files across components, screens, navigation, constants
 - **Summary**: TYPOGRAPHY/ELEVATION migration, SIZES fixes, React.memo on 28 components, unused imports removed, accessibility labels added
+
+## 2026-07-22 — Initial App Build
+- **Added**: All source files (14 components, 11 screens, 2 navigators, 4 mock files, 1 theme)
+- **Summary**: Complete Kidora app with mock data, 50 videos, 50 shorts, full navigation
 
 ## 2026-07-22 — Initial App Build
 - **Added**: All source files (14 components, 11 screens, 2 navigators, 4 mock files, 1 theme)

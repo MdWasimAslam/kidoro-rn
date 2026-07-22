@@ -4,8 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SIZES, TYPOGRAPHY, ELEVATION } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
-import { getSearchResults } from '../mock/videos';
-import { trendingSearches } from '../mock/categories';
+import searchService from '../services/search.service';
 import VideoCard from '../components/VideoCard';
 import EmptyState from '../components/EmptyState';
 import LoadingSkeleton from '../components/LoadingSkeleton';
@@ -40,24 +39,34 @@ const SearchScreen = React.memo(function SearchScreen({ route, navigation }) {
     trendingChipText: { color: colors.text, ...TYPOGRAPHY.label, marginLeft: SIZES.xs },
   }), [colors]);
 
-  const handleSearch = useCallback((text) => {
-    setQuery(text);
-    if (text.trim()) {
-      setLoading(true);
-      setTimeout(() => { setResults(getSearchResults(text)); setLoading(false); }, 300);
-    } else { setResults([]); }
+  const performSearch = useCallback(async (q) => {
+    setLoading(true);
+    try {
+      const raw = await searchService.searchVideos(q);
+      const formatted = (raw || []).map(v => ({
+        id: v.id,
+        title: v.title,
+        thumbnail: v.thumbnail_url || `https://img.youtube.com/vi/${v.video_id}/hqdefault.jpg`,
+        youtubeId: v.video_id,
+        category: v.categories?.name || '',
+      }));
+      setResults(formatted);
+    } catch (e) {
+      setResults([]);
+    }
+    setLoading(false);
   }, []);
 
-  const handleTrendingPress = useCallback((term) => {
-    setQuery(term); setLoading(true);
-    setTimeout(() => { setResults(getSearchResults(term)); setLoading(false); }, 300);
-  }, []);
+  const handleSearch = useCallback((text) => {
+    setQuery(text);
+    if (text.trim()) { performSearch(text); } else { setResults([]); }
+  }, [performSearch]);
 
   const handleVideoPress = useCallback((video) => {
     navigation.navigate('VideoPlayer', { video });
   }, [navigation]);
 
-  const showTrending = !query.trim() && !loading;
+  const showEmpty = !query.trim() && !loading;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -77,18 +86,8 @@ const SearchScreen = React.memo(function SearchScreen({ route, navigation }) {
         </View>
       </View>
 
-      {showTrending && (
-        <View style={styles.trendingSection}>
-          <Text style={styles.sectionTitle}>Trending Searches</Text>
-          <View style={styles.trendingChips}>
-            {trendingSearches.map((term, i) => (
-              <TouchableOpacity key={i} style={styles.trendingChip} onPress={() => handleTrendingPress(term)} accessibilityLabel={term}>
-                <MaterialCommunityIcons name="trending-up" size={16} color={colors.primary} />
-                <Text style={styles.trendingChipText}>{term}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+      {showEmpty && (
+        <EmptyState icon="movie-search-outline" title="Search Videos" message="Type to find your favorite videos" />
       )}
 
       {loading && <LoadingSkeleton count={4} type="list" />}

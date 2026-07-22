@@ -1,12 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { setAlternateAppIcon, getAppIconName } from 'expo-alternate-app-icons';
+import { getItem, setItem } from '../utils/storage';
 
 const YT_ICON_KEY = '@kidoro_yt_icon';
 
+let alternateAppIcons = null;
+try {
+  alternateAppIcons = require('expo-alternate-app-icons');
+} catch (e) {
+  // Native module not linked in Expo Go / current dev build
+}
+
 /**
  * useYTIcon — manages the YouTube-style app icon toggle.
- * Uses expo-alternate-app-icons to switch the actual iOS/Android home screen icon.
+ * Safely handles missing native module in Expo Go or custom dev client.
  */
 export default function useYTIcon() {
   const [showYTIcon, setShowYTIcon] = useState(false);
@@ -17,16 +23,17 @@ export default function useYTIcon() {
   useEffect(() => {
     (async () => {
       try {
-        // Check if the current app icon is already the YouTube icon
-        const currentIcon = await getAppIconName();
-        if (currentIcon === 'YouTubeIcon') {
-          setShowYTIcon(true);
-        } else {
-          // Fall back to AsyncStorage preference
-          const stored = await AsyncStorage.getItem(YT_ICON_KEY);
-          if (stored !== null) {
-            setShowYTIcon(stored === 'true');
+        if (alternateAppIcons && typeof alternateAppIcons.getAppIconName === 'function') {
+          const currentIcon = await alternateAppIcons.getAppIconName();
+          if (currentIcon === 'YouTubeIcon') {
+            setShowYTIcon(true);
+            setLoaded(true);
+            return;
           }
+        }
+        const stored = await getItem(YT_ICON_KEY);
+        if (stored !== null) {
+          setShowYTIcon(stored === 'true');
         }
       } catch (e) { /* silent fallback */ }
       setLoaded(true);
@@ -38,18 +45,16 @@ export default function useYTIcon() {
     setSwitching(true);
 
     try {
-      if (next) {
-        // Switch to YouTube icon
-        await setAlternateAppIcon('YouTubeIcon');
-      } else {
-        // Reset to default icon
-        await setAlternateAppIcon(null);
+      if (alternateAppIcons && typeof alternateAppIcons.setAlternateAppIcon === 'function') {
+        if (next) {
+          await alternateAppIcons.setAlternateAppIcon('YouTubeIcon');
+        } else {
+          await alternateAppIcons.setAlternateAppIcon(null);
+        }
       }
-      // Success — update state and persist
       setShowYTIcon(next);
-      await AsyncStorage.setItem(YT_ICON_KEY, next ? 'true' : 'false');
+      await setItem(YT_ICON_KEY, next ? 'true' : 'false');
     } catch (e) {
-      // If icon change fails, revert
       console.warn('App icon switch failed:', e);
     } finally {
       setSwitching(false);

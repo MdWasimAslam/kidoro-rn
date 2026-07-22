@@ -20,7 +20,7 @@
 ## Screens (11)
 ```
 src/screens/SplashScreen.js         — Logo animation → AccessCode after 2s
-src/screens/AccessCodeScreen.js     — Code gate (1234 valid)
+src/screens/AccessCodeScreen.js     — Code gate (backend validated)
 src/screens/HomeScreen.js           — Infinite scroll grid (hero + continue watching header, 2-col recommended)
 src/screens/ShortsScreen.js         — Vertical paging, 50 shorts, auto-play
 src/screens/VideoPlayerScreen.js    — YouTube iframe + suggested videos

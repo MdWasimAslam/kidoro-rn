@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getItem, setItem } from '../utils/storage';
 
 const STREAK_KEY = '@kidoro_streak';
 const LAST_VISIT_KEY = '@kidoro_last_visit';
@@ -47,8 +47,8 @@ export default function useStreak() {
     (async () => {
       try {
         const [storedStreak, storedLastVisit] = await Promise.all([
-          AsyncStorage.getItem(STREAK_KEY),
-          AsyncStorage.getItem(LAST_VISIT_KEY),
+          getItem(STREAK_KEY),
+          getItem(LAST_VISIT_KEY),
         ]);
 
         const today = formatDate(new Date());
@@ -57,12 +57,12 @@ export default function useStreak() {
         if (storedLastVisit === null) {
           if (currentStreak > 0) {
             // ── Legacy user: streak from older app version — preserve it ──
-            await AsyncStorage.setItem(LAST_VISIT_KEY, today);
+            await setItem(LAST_VISIT_KEY, today);
             setStreak(currentStreak);
           } else {
             // ── Truly first visit ever ──
-            await AsyncStorage.setItem(STREAK_KEY, '1');
-            await AsyncStorage.setItem(LAST_VISIT_KEY, today);
+            await setItem(STREAK_KEY, '1');
+            await setItem(LAST_VISIT_KEY, today);
             setStreak(1);
           }
         } else if (storedLastVisit === today) {
@@ -71,13 +71,13 @@ export default function useStreak() {
         } else if (storedLastVisit === getYesterday()) {
           // ── Consecutive day — increment ──
           const newStreak = currentStreak + 1;
-          await AsyncStorage.setItem(STREAK_KEY, String(newStreak));
-          await AsyncStorage.setItem(LAST_VISIT_KEY, today);
+          await setItem(STREAK_KEY, String(newStreak));
+          await setItem(LAST_VISIT_KEY, today);
           setStreak(newStreak);
         } else {
           // ── Gap of more than 1 day — reset to 1 ──
-          await AsyncStorage.setItem(STREAK_KEY, '1');
-          await AsyncStorage.setItem(LAST_VISIT_KEY, today);
+          await setItem(STREAK_KEY, '1');
+          await setItem(LAST_VISIT_KEY, today);
           setStreak(1);
         }
       } catch (e) {

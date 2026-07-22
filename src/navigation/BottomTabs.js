@@ -1,11 +1,10 @@
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { SIZES } from '../constants/theme';
-import { useTheme } from '../context/ThemeContext';
+import { COLORS, SIZES, ELEVATION } from '../constants/theme';
 import HomeScreen from '../screens/HomeScreen';
 import ShortsScreen from '../screens/ShortsScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
@@ -40,16 +39,15 @@ const TabIcon = React.memo(function TabIcon({ name, focused, color }) {
   }, [focused]);
 
   return (
-    <Animated.View style={[{ alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 44 }, { transform: [{ scale: scaleAnim }] }]}>
+    <Animated.View style={[styles.tabItem, { transform: [{ scale: scaleAnim }] }]}>
       <MaterialCommunityIcons name={name} size={28} color={color} />
+      {focused && <View style={styles.activeDot} />}
     </Animated.View>
   );
 });
 
 const BottomTabs = React.memo(function BottomTabs() {
   const insets = useSafeAreaInsets();
-  const { colors, theme } = useTheme();
-  const { elevation } = theme;
 
   return (
     <Tab.Navigator
@@ -59,39 +57,32 @@ const BottomTabs = React.memo(function BottomTabs() {
           height: 72,
           paddingBottom: Math.max(insets.bottom, 4),
           paddingTop: 4,
-          backgroundColor: colors.card,
+          backgroundColor: COLORS.card,
           borderTopWidth: 1,
-          borderTopColor: colors.border,
-          ...elevation.level1,
+          borderTopColor: COLORS.border,
+          ...ELEVATION.level2,
         },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.textSecondary,
         tabBarShowLabel: false,
         tabBarHideOnKeyboard: true,
       }}
     >
-      <Tab.Screen
-        name="Home"
-        component={HomeStackScreen}
-        options={{ tabBarIcon: ({ focused, color }) => (<TabIcon name={focused ? 'home' : 'home-outline'} focused={focused} color={color} />) }}
-      />
-      <Tab.Screen
-        name="Shorts"
-        component={ShortsScreen}
-        options={{ tabBarIcon: ({ focused, color }) => (<TabIcon name={focused ? 'play-box-multiple' : 'play-box-multiple-outline'} focused={focused} color={color} />) }}
-      />
-      <Tab.Screen
-        name="Favorites"
-        component={FavoritesScreen}
-        options={{ tabBarIcon: ({ focused, color }) => (<TabIcon name={focused ? 'heart' : 'heart-outline'} focused={focused} color={color} />) }}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{ tabBarIcon: ({ focused, color }) => (<TabIcon name={focused ? 'cog' : 'cog-outline'} focused={focused} color={color} />) }}
-      />
+      <Tab.Screen name="Home" component={HomeStackScreen}
+        options={{ tabBarIcon: ({ focused, color }) => <TabIcon name={focused ? 'home' : 'home-outline'} focused={focused} color={color} /> }} />
+      <Tab.Screen name="Shorts" component={ShortsScreen}
+        options={{ tabBarIcon: ({ focused, color }) => <TabIcon name={focused ? 'play-box-multiple' : 'play-box-multiple-outline'} focused={focused} color={color} /> }} />
+      <Tab.Screen name="Favorites" component={FavoritesScreen}
+        options={{ tabBarIcon: ({ focused, color }) => <TabIcon name={focused ? 'heart' : 'heart-outline'} focused={focused} color={color} /> }} />
+      <Tab.Screen name="Settings" component={SettingsScreen}
+        options={{ tabBarIcon: ({ focused, color }) => <TabIcon name={focused ? 'cog' : 'cog-outline'} focused={focused} color={color} /> }} />
     </Tab.Navigator>
   );
 });
 
 export default BottomTabs;
+
+const styles = StyleSheet.create({
+  tabItem: { alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 44 },
+  activeDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.primary, marginTop: 3 },
+});

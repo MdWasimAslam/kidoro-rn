@@ -3,7 +3,7 @@ import { View, Text, FlatList, RefreshControl, StyleSheet, StatusBar } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SIZES, TYPOGRAPHY } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
-import { videos } from '../mock/videos';
+import videoService from '../services/video.service';
 import { useFavoritesContext } from '../context/FavoritesContext';
 import VideoCard from '../components/VideoCard';
 import EmptyState from '../components/EmptyState';
@@ -13,8 +13,30 @@ const FavoritesScreen = React.memo(function FavoritesScreen({ navigation }) {
   const { colors, statusBarStyle } = useTheme();
   const { favoriteIds, loaded, toggleFavorite } = useFavoritesContext();
   const [refreshing, setRefreshing] = useState(false);
+  const [favoriteVideos, setFavoriteVideos] = useState([]);
 
-  const favoriteVideos = useMemo(() => videos.filter(v => favoriteIds.includes(v.id)), [favoriteIds]);
+  const loadFavorites = useCallback(async () => {
+    try {
+      const allVideos = await videoService.getVideos(50);
+      const favs = allVideos
+        .filter(v => v.favorite || favoriteIds.includes(v.id))
+        .map(v => ({
+          id: v.id,
+          title: v.title,
+          thumbnail: v.thumbnail_url || `https://img.youtube.com/vi/${v.video_id}/hqdefault.jpg`,
+          youtubeId: v.video_id,
+          category: v.categories?.name || 'General',
+          favorite: true,
+        }));
+      setFavoriteVideos(favs);
+    } catch (e) {
+      console.error('[FavoritesScreen] Error:', e.message);
+    }
+  }, [favoriteIds]);
+
+  React.useEffect(() => {
+    loadFavorites();
+  }, [loadFavorites]);
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },

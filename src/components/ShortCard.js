@@ -23,23 +23,23 @@ const ShortCard = React.memo(function ShortCard({ short, active, onFavorite }) {
 
   return (
     <View style={[styles.container, { width, height }]}>
-      <Video ref={videoRef} source={{ uri: short.videoUrl }} style={[styles.background, { width, height }]} resizeMode={ResizeMode.COVER} shouldPlay={false} isLooping isMuted={false} useNativeControls={false} volume={1.0} />
-      {!active && <Image source={{ uri: short.thumbnail }} style={[styles.background, { width, height }]} resizeMode="cover" />}
+      <Video ref={videoRef} source={{ uri: short.url }} style={[styles.background, { width, height }]} resizeMode={ResizeMode.COVER} shouldPlay={false} isLooping isMuted={false} useNativeControls={false} volume={1.0} />
+      {!active && short.thumbnail ? <Image source={{ uri: short.thumbnail }} style={[styles.background, { width, height }]} resizeMode="cover" /> : null}
       <View style={styles.overlay} />
       <View style={styles.content}>
         <View style={styles.leftContent}>
           <Text style={styles.title} numberOfLines={2}>{short.title}</Text>
-          <Text style={styles.channel}>{short.channel}</Text>
-          <Text style={styles.description} numberOfLines={2}>{short.description}</Text>
+          {short.description ? <Text style={styles.description} numberOfLines={2}>{short.description}</Text> : null}
+          {short.tags ? (
           <View style={styles.musicTag}>
-            <MaterialCommunityIcons name="music" size={14} color="#FFF" />
-            <Text style={styles.musicText}>{short.music}</Text>
+            <MaterialCommunityIcons name="tag" size={14} color="#FFF" />
+            <Text style={styles.musicText}>{short.tags}</Text>
           </View>
+          ) : null}
         </View>
         <View style={styles.actions}>
           <TouchableOpacity onPress={onFavorite} style={styles.actionButton} accessibilityLabel={short.favorite ? 'Remove favorite' : 'Add favorite'}>
             <MaterialCommunityIcons name={short.favorite ? 'heart' : 'heart-outline'} size={28} color={short.favorite ? colors.primary : '#FFF'} />
-            <Text style={styles.actionText}>{short.likes >= 1000 ? `${(short.likes / 1000).toFixed(0)}K` : short.likes}</Text>
           </TouchableOpacity>
         </View>
       </View>

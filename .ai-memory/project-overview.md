@@ -4,20 +4,21 @@
 **Type**: Kids streaming/learning mobile app  
 **Platform**: React Native + Expo SDK 54  
 **Language**: JavaScript (no TypeScript)  
-**DB**: AsyncStorage (local only, no backend)  
+**DB**: Next.js REST API + Supabase PostgreSQL  
+**Backend Services**: `src/services/` (api, auth, child, video, shorts, playlist, analytics, reports, search, settings)  
 
 ## Key Features
-- Home screen with categories, trending hero card, search
-- YouTube video player (react-native-youtube-iframe)
-- TikTok-style shorts (expo-av Video)
-- Favorites persisted to AsyncStorage
-- Access code gate (mock: code "1234")
+- Home screen with live backend categories, trending hero card, search
+- YouTube video player (react-native-youtube-iframe) with video playback analytics
+- TikTok-style shorts (expo-av Video) fetched live from backend
+- Favorites persisted to backend & synced locally
+- Child PIN gate (validated against `children` database table)
 - Settings with streak tracking
 - Playlists screen
 
 ## App Flow
 ```
-Splash → AccessCode (1234) → MainTabs
+Splash → AccessCode (backend validated) → MainTabs
   ├── Home → VideoPlayer, Search
   ├── Shorts
   ├── Favorites

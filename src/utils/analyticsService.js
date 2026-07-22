@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getItem, setItem } from './storage';
 
 const QUEUE_STORAGE_KEY = '@kidoro_analytics_event_queue_v1';
 const BATCH_SIZE = 10;
@@ -15,7 +15,7 @@ class AnalyticsService {
 
   async init() {
     try {
-      const stored = await AsyncStorage.getItem(QUEUE_STORAGE_KEY);
+      const stored = await getItem(QUEUE_STORAGE_KEY);
       if (stored) {
         this.queue = JSON.parse(stored);
       }
@@ -48,7 +48,7 @@ class AnalyticsService {
 
   async persistQueue() {
     try {
-      await AsyncStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(this.queue.slice(-100)));
+      await setItem(QUEUE_STORAGE_KEY, JSON.stringify(this.queue.slice(-100)));
     } catch (e) {
       // Non-blocking catch
     }

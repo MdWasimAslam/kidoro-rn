@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getItem, setItem } from '../utils/storage';
 
 const FAVORITES_KEY = '@kidoro_favorites';
 
@@ -10,7 +10,7 @@ export default function useFavorites() {
   useEffect(() => {
     (async () => {
       try {
-        const stored = await AsyncStorage.getItem(FAVORITES_KEY);
+        const stored = await getItem(FAVORITES_KEY);
         if (stored) setFavoriteIds(JSON.parse(stored));
       } catch (e) {}
       setLoaded(true);
@@ -18,7 +18,7 @@ export default function useFavorites() {
   }, []);
 
   const persist = useCallback(async (ids) => {
-    try { await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(ids)); } catch (e) {}
+    try { await setItem(FAVORITES_KEY, JSON.stringify(ids)); } catch (e) {}
   }, []);
 
   const isFavorite = useCallback((videoId) => favoriteIds.includes(videoId), [favoriteIds]);

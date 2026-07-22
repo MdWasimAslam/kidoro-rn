@@ -1,29 +1,39 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Alert, Image, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SIZES, TYPOGRAPHY, ELEVATION } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
-import { profile } from '../mock/profile';
-import { videos } from '../mock/videos';
-import { shorts } from '../mock/shorts';
+import settingsService from '../services/settings.service';
+import authService from '../services/auth.service';
+import videoService from '../services/video.service';
 import useStreak from '../hooks/useStreak';
 import useYTIcon from '../hooks/useYouTubeMode';
-
-const ACCESS_CODE = '1234';
+import { useAppConfigContext } from '../context/AppConfigContext';
 
 const BADGE_THRESHOLDS = [1, 3, 7, 14, 21, 30, 50];
 function calcBadgeCount(streak) { return BADGE_THRESHOLDS.filter(t => streak >= t).length; }
-
-const TOTAL_VIDEOS = videos.length + shorts.length;
 
 function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { colors, isDark, toggleTheme, statusBarStyle } = useTheme();
   const { streak } = useStreak();
   const { showYTIcon, toggleYTIcon, switching } = useYTIcon();
+  const appConfig = useAppConfigContext();
+  const featuresConfig = appConfig?.features || {};
+  const [profileData, setProfileData] = useState({ name: '', avatarUrl: null, accessCode: '' });
+  const [totalVideos, setTotalVideos] = useState(0);
 
   const badgeCount = useMemo(() => calcBadgeCount(streak), [streak]);
+
+  useEffect(() => {
+    settingsService.getSettings().then((s) => {
+      setProfileData({ name: s.childName, avatarUrl: s.avatarUrl, accessCode: s.accessCode });
+    }).catch(() => {});
+    videoService.getVideos(1).then((videos) => {
+      setTotalVideos(Array.isArray(videos) ? videos.length : 0);
+    }).catch(() => {});
+  }, []);
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
@@ -92,16 +102,16 @@ function SettingsScreen({ navigation }) {
           <View style={styles.profileContent}>
             <View style={styles.profileTopRow}>
               <View style={styles.avatarWrapper}>
-                <Image source={{ uri: profile.avatar }} style={styles.avatar} />
+                {profileData.avatarUrl ? <Image source={{ uri: profileData.avatarUrl }} style={styles.avatar} /> : <View style={[styles.avatar, { backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center' }]}><MaterialCommunityIcons name="account" size={30} color={colors.textSecondary} /></View>}
                 <View style={styles.avatarRing} />
                 <View style={styles.onlineDot} />
               </View>
               <View style={styles.profileNameSection}>
-                <Text style={styles.profileName}>{profile.name}</Text>
+                <Text style={styles.profileName} numberOfLines={1}>{profileData.name}</Text>
                 <View style={styles.codeRow}>
                   <MaterialCommunityIcons name="lock" size={14} color={colors.primary} />
                   <Text style={styles.codeLabel}>Access Code: </Text>
-                  <Text style={styles.codeValue}>{ACCESS_CODE}</Text>
+                  <Text style={styles.codeValue}>{profileData.accessCode}</Text>
                 </View>
               </View>
             </View>
@@ -118,7 +128,7 @@ function SettingsScreen({ navigation }) {
                 <View style={[styles.statIconBox, { backgroundColor: colors.blue + '12' }]}>
                   <MaterialCommunityIcons name="play-circle" size={22} color={colors.blue} />
                 </View>
-                <Text style={styles.statValue}>{TOTAL_VIDEOS}</Text>
+                <Text style={styles.statValue}>{totalVideos}</Text>
                 <Text style={styles.statLabel}>Videos</Text>
               </View>
               <View style={styles.statDivider} />
@@ -137,6 +147,7 @@ function SettingsScreen({ navigation }) {
         <View style={styles.group}>
           <Text style={styles.groupTitle}>APPEARANCE</Text>
           <View style={styles.groupCard}>
+            {featuresConfig.enableDarkMode !== false && (
             <View style={[styles.item]}>
               <View style={[styles.itemIcon, { backgroundColor: isDark ? colors.purple + '15' : colors.secondary + '15' }]}>
                 <MaterialCommunityIcons name={isDark ? 'weather-night' : 'white-balance-sunny'} size={22} color={isDark ? colors.purple : colors.secondaryDark} />
@@ -152,6 +163,7 @@ function SettingsScreen({ navigation }) {
                 thumbColor={isDark ? colors.primary : colors.textSecondary}
               />
             </View>
+            )}
                     {/* YT Icon Toggle */}
             <View style={[styles.item, styles.itemBorder]}>
               <View style={[styles.itemIcon, { backgroundColor: colors.blue + '15' }]}>
@@ -209,7 +221,7 @@ function SettingsScreen({ navigation }) {
         </View>
 
         {/* Logout */}
-        <TouchableOpacity style={styles.logout} onPress={() => navigation.replace('AccessCode')} accessibilityLabel="Logout">
+        <TouchableOpacity style={styles.logout} onPress={async () => { await authService.logout(); navigation.replace('AccessCode'); }} accessibilityLabel="Logout">
           <MaterialCommunityIcons name="logout" size={22} color={colors.error} />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>

@@ -1,7 +1,7 @@
 import React, { useRef, useCallback, useMemo } from 'react';
 import { View, FlatList, StyleSheet, StatusBar, useWindowDimensions } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
-import { shorts } from '../mock/shorts';
+import shortsService from '../services/shorts.service';
 import { useFavoritesContext } from '../context/FavoritesContext';
 import ShortCard from '../components/ShortCard';
 
@@ -11,10 +11,30 @@ const ShortsScreen = React.memo(function ShortsScreen() {
   const isFocused = useIsFocused();
   const { favoriteIds, toggleFavorite } = useFavoritesContext();
   const [currentIndex, setCurrentIndex] = React.useState(0);
+  const [shortsData, setShortsData] = React.useState([]);
+
+  React.useEffect(() => {
+    let mounted = true;
+    shortsService.getShorts(30).then(data => {
+      if (mounted && data) {
+        const formatted = data.map(s => ({
+          id: s.id,
+          title: s.title,
+          url: s.youtube_url,
+          video_id: s.video_id,
+          thumbnail: s.thumbnail_url || `https://img.youtube.com/vi/${s.video_id}/hqdefault.jpg`,
+          description: s.description || '',
+          tags: s.tags || '',
+        }));
+        setShortsData(formatted);
+      }
+    });
+    return () => { mounted = false; };
+  }, []);
 
   const shortsWithFav = useMemo(
-    () => shorts.map(s => ({ ...s, favorite: favoriteIds.includes(s.id) })),
-    [favoriteIds]
+    () => shortsData.map(s => ({ ...s, favorite: favoriteIds.includes(s.id) })),
+    [shortsData, favoriteIds]
   );
 
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
