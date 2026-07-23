@@ -8,7 +8,6 @@ const playlistService = {
         order: 'created_at.desc',
       });
     } catch (e) {
-      console.error('[playlistService.getPlaylists] Error:', e.message);
       return [];
     }
   },

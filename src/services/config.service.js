@@ -15,8 +15,8 @@ function deepMerge(defaults, overrides) {
   if (!overrides) return result;
   for (const key of Object.keys(result)) {
     if (overrides[key] !== undefined && overrides[key] !== null) {
-      if (typeof result[key] === 'object' && !Array.isArray(result[key])) {
-        result[key] = { ...result[key], ...overrides[key] };
+      if (typeof result[key] === 'object' && !Array.isArray(result[key]) && typeof overrides[key] === 'object' && !Array.isArray(overrides[key])) {
+        result[key] = deepMerge(result[key], overrides[key]);
       } else {
         result[key] = overrides[key];
       }
@@ -32,7 +32,7 @@ const configService = {
       cachedConfig = deepMerge(DEFAULT_CONFIG, data);
       return cachedConfig;
     } catch (e) {
-      console.warn('[configService] REST fetch failed, trying Supabase fallback');
+      // REST fetch failed, trying Supabase fallback
     }
 
     try {
@@ -42,7 +42,7 @@ const configService = {
         return cachedConfig;
       }
     } catch (e2) {
-      console.error('[configService] Supabase fallback error:', e2.message);
+      // Supabase fallback failed, using defaults
     }
 
     cachedConfig = DEFAULT_CONFIG;

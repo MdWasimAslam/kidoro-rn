@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SIZES, TYPOGRAPHY, ELEVATION } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
+import quizService from '../services/quiz.service';
 
 const GamesScreen = React.memo(function GamesScreen() {
   const insets = useSafeAreaInsets();
@@ -17,10 +18,9 @@ const GamesScreen = React.memo(function GamesScreen() {
   const bounceAnim = useRef(new Animated.Value(1)).current;
 
   React.useEffect(() => {
-    const { supabaseRest } = require('../services/api');
-    supabaseRest('quizzes', { select: '*', status: 'eq.active', limit: '20' }).then(data => {
-      if (Array.isArray(data) && data.length > 0) setQuizzes(data);
-    }).catch(() => {});
+    quizService.getQuizzes(20).then(data => {
+      if (data.length > 0) setQuizzes(data);
+    });
   }, []);
 
   const currentQuiz = quizzes[currentIdx] || null;
@@ -34,14 +34,14 @@ const GamesScreen = React.memo(function GamesScreen() {
     headerSubtitle: { color: colors.textSecondary, ...TYPOGRAPHY.caption, marginTop: 2 },
     statBadge: {
       flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface,
-      paddingHorizontal: SIZES.md, paddingVertical: SIZES.xs, borderRadius: SIZES.radius, gap: 4, ...ELEVATION.level1,
+      paddingHorizontal: SIZES.md, paddingVertical: SIZES.xs, borderRadius: SIZES.radiusLg, gap: 4, ...ELEVATION.level1,
     },
     statText: { color: colors.text, ...TYPOGRAPHY.bodyBold },
     streakCard: { backgroundColor: colors.primaryAlpha10, borderRadius: SIZES.radiusSm, padding: SIZES.md, marginBottom: SIZES.md, borderWidth: 1, borderColor: colors.primary + '20' },
     streakRow: { flexDirection: 'row', alignItems: 'center', gap: SIZES.xs },
     streakTitle: { color: colors.primary, ...TYPOGRAPHY.h4 },
     streakSub: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
-    quizCard: { backgroundColor: colors.card, borderRadius: SIZES.radius, padding: SIZES.md, ...ELEVATION.level2 },
+    quizCard: { backgroundColor: colors.card, borderRadius: SIZES.radiusLg, padding: SIZES.md, ...ELEVATION.level2 },
     categoryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: SIZES.sm },
     iconContainer: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginRight: SIZES.xs },
     categoryName: { ...TYPOGRAPHY.bodyBold, flex: 1 },

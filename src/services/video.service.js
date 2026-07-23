@@ -1,4 +1,4 @@
-const { supabaseRest } = require('./api');
+const { supabaseRest, getToken, SUPABASE_ANON_KEY, SUPABASE_URL } = require('./api');
 
 const videoService = {
   getVideos: async (limit = 50) => {
@@ -12,7 +12,6 @@ const videoService = {
         limit: limit.toString(),
       });
     } catch (e) {
-      console.error('[videoService.getVideos] Error:', e.message);
       return [];
     }
   },
@@ -27,21 +26,21 @@ const videoService = {
         limit: '5',
       });
     } catch (e) {
-      console.error('[videoService.getFeaturedVideos] Error:', e.message);
       return [];
     }
   },
 
   toggleFavorite: async (videoId, currentStatus) => {
     try {
-      const token = await require('./api').getToken();
+      const token = await getToken();
       const headers = {
-        'apikey': process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
-        'Authorization': `Bearer ${token || ''}`,
+        'apikey': process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${token || SUPABASE_ANON_KEY}`,
         'Content-Type': 'application/json',
         'Prefer': 'return=representation',
       };
-      const url = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/rest/v1/videos?id=eq.${videoId}`;
+      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || SUPABASE_URL;
+      const url = `${supabaseUrl}/rest/v1/videos?id=eq.${videoId}`;
       const res = await fetch(url, {
         method: 'PATCH',
         headers,
@@ -49,7 +48,6 @@ const videoService = {
       });
       return await res.json();
     } catch (e) {
-      console.error('[videoService.toggleFavorite] Error:', e.message);
       return null;
     }
   },

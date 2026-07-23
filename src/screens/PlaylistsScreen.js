@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, StatusBar, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SIZES, TYPOGRAPHY } from '../constants/theme';
@@ -52,7 +52,11 @@ const PlaylistsScreen = React.memo(function PlaylistsScreen({ navigation }) {
       </View>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: SIZES.md, paddingBottom: 100 }}>
         {playlists.map((playlist) => (
-          <PlaylistCard key={playlist.id} playlist={playlist} onPress={() => {}} />
+          <PlaylistCard key={playlist.id} playlist={playlist} onPress={() => {
+            if (playlist.count > 0) {
+              Alert.alert(playlist.name, `${playlist.count} videos in this playlist`);
+            }
+          }} />
         ))}
       </ScrollView>
     </View>

@@ -1,3 +1,5 @@
+const SYSTEM_FONT = 'Poppins_400Regular';
+
 const COLORS = {
   primary: '#FF4D4D',
   primaryLight: '#FF7A7A',
@@ -71,20 +73,20 @@ const SIZES = {
 };
 
 const TYPOGRAPHY = {
-  headingXL: { fontSize: 32, fontWeight: '800', lineHeight: 38 },
-  headingL: { fontSize: 26, fontWeight: '700', lineHeight: 32 },
-  headingM: { fontSize: 20, fontWeight: '700', lineHeight: 26 },
-  headingS: { fontSize: 16, fontWeight: '600', lineHeight: 22 },
-  h1: { fontSize: 32, fontWeight: '800', lineHeight: 38 },
-  h2: { fontSize: 26, fontWeight: '700', lineHeight: 32 },
-  h3: { fontSize: 20, fontWeight: '700', lineHeight: 26 },
-  h4: { fontSize: 16, fontWeight: '600', lineHeight: 22 },
-  body: { fontSize: 15, fontWeight: '400', lineHeight: 22 },
-  bodyBold: { fontSize: 15, fontWeight: '600', lineHeight: 22 },
-  caption: { fontSize: 13, fontWeight: '400', lineHeight: 18 },
-  captionBold: { fontSize: 13, fontWeight: '600', lineHeight: 18 },
-  label: { fontSize: 14, fontWeight: '600', lineHeight: 18 },
-  labelBold: { fontSize: 14, fontWeight: '700', lineHeight: 18 },
+  headingXL: { fontFamily: 'Poppins_800ExtraBold', fontSize: 32, fontWeight: '800', lineHeight: 38 },
+  headingL: { fontFamily: 'Poppins_700Bold', fontSize: 26, fontWeight: '700', lineHeight: 32 },
+  headingM: { fontFamily: 'Poppins_700Bold', fontSize: 20, fontWeight: '700', lineHeight: 26 },
+  headingS: { fontFamily: 'Poppins_600SemiBold', fontSize: 16, fontWeight: '600', lineHeight: 22 },
+  h1: { fontFamily: 'Poppins_800ExtraBold', fontSize: 32, fontWeight: '800', lineHeight: 38 },
+  h2: { fontFamily: 'Poppins_700Bold', fontSize: 26, fontWeight: '700', lineHeight: 32 },
+  h3: { fontFamily: 'Poppins_700Bold', fontSize: 20, fontWeight: '700', lineHeight: 26 },
+  h4: { fontFamily: 'Poppins_600SemiBold', fontSize: 16, fontWeight: '600', lineHeight: 22 },
+  body: { fontFamily: 'Poppins_400Regular', fontSize: 15, fontWeight: '400', lineHeight: 22 },
+  bodyBold: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, fontWeight: '600', lineHeight: 22 },
+  caption: { fontFamily: 'Poppins_400Regular', fontSize: 13, fontWeight: '400', lineHeight: 18 },
+  captionBold: { fontFamily: 'Poppins_600SemiBold', fontSize: 13, fontWeight: '600', lineHeight: 18 },
+  label: { fontFamily: 'Poppins_600SemiBold', fontSize: 14, fontWeight: '600', lineHeight: 18 },
+  labelBold: { fontFamily: 'Poppins_700Bold', fontSize: 14, fontWeight: '700', lineHeight: 18 },
 };
 
 const ELEVATION = {
@@ -98,10 +100,10 @@ function getTheme({ isDark = false }) {
   if (isDark) {
     return {
       COLORS: { ...COLORS, background: COLORS.backgroundDark, surface: COLORS.surfaceDark, card: COLORS.cardDark, text: COLORS.textDark, textSecondary: COLORS.textSecondaryDark, border: COLORS.borderDark },
-      SIZES, TYPOGRAPHY,
+      SIZES, TYPOGRAPHY, ELEVATION,
     };
   }
-  return { COLORS, SIZES, TYPOGRAPHY };
+  return { COLORS, SIZES, TYPOGRAPHY, ELEVATION };
 }
 
-module.exports = { COLORS, SIZES, TYPOGRAPHY, ELEVATION, getTheme };
+module.exports = { COLORS, SIZES, TYPOGRAPHY, ELEVATION, SYSTEM_FONT, getTheme };

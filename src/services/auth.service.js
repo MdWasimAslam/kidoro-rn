@@ -1,4 +1,4 @@
-const { request, supabaseRest } = require('./api');
+const { request, supabaseRest, SUPABASE_ANON_KEY, setActiveChild } = require('./api');
 const storage = require('../utils/storage');
 const { TOKEN_KEY } = require('./api');
 
@@ -6,11 +6,11 @@ const authService = {
   loginParent: async (email, password) => {
     try {
       // Authenticate via Supabase Auth endpoint or backend auth route
-      const res = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://lyvjygwygwlyygvw.supabase.co'}/auth/v1/token?grant_type=password`, {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://uhqgqllpovhoesfvkgvv.supabase.co'}/auth/v1/token?grant_type=password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
+          'apikey': process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({ email, password }),
       });
@@ -26,7 +26,6 @@ const authService = {
       }
       return data;
     } catch (e) {
-      console.error('[authService.loginParent] Error:', e.message);
       throw e;
     }
   },
@@ -36,8 +35,9 @@ const authService = {
       await storage.removeItem(TOKEN_KEY);
       await storage.removeItem('@kidoro_refresh_token');
       await storage.removeItem('@kidoro_child_session');
+      setActiveChild(null); // clear in-memory cache so getActiveChild() returns null
     } catch (e) {
-      console.error('[authService.logout] Error:', e.message);
+      // storage error, non-blocking
     }
   },
 

@@ -3,21 +3,24 @@ import { View, Text, FlatList, RefreshControl, StyleSheet, StatusBar } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SIZES, TYPOGRAPHY } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
+import { useCardSizes } from '../utils/responsive';
 import videoService from '../services/video.service';
 import { useFavoritesContext } from '../context/FavoritesContext';
 import VideoCard from '../components/VideoCard';
 import EmptyState from '../components/EmptyState';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 
 const FavoritesScreen = React.memo(function FavoritesScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { colors, statusBarStyle } = useTheme();
+  const { horizontalPadding, gap } = useCardSizes();
   const { favoriteIds, loaded, toggleFavorite } = useFavoritesContext();
   const [refreshing, setRefreshing] = useState(false);
   const [favoriteVideos, setFavoriteVideos] = useState([]);
 
   const loadFavorites = useCallback(async () => {
     try {
-      const allVideos = await videoService.getVideos(50);
+      const allVideos = await videoService.getVideos(100);
       const favs = allVideos
         .filter(v => v.favorite || favoriteIds.includes(v.id))
         .map(v => ({
@@ -25,12 +28,15 @@ const FavoritesScreen = React.memo(function FavoritesScreen({ navigation }) {
           title: v.title,
           thumbnail: v.thumbnail_url || `https://img.youtube.com/vi/${v.video_id}/hqdefault.jpg`,
           youtubeId: v.video_id,
+          channel: v.channel || '',
+          views: v.views || 0,
           category: v.categories?.name || 'General',
           favorite: true,
+          duration: v.duration,
         }));
       setFavoriteVideos(favs);
     } catch (e) {
-      console.error('[FavoritesScreen] Error:', e.message);
+      // load error, favorites unavailable
     }
   }, [favoriteIds]);
 
@@ -51,13 +57,15 @@ const FavoritesScreen = React.memo(function FavoritesScreen({ navigation }) {
     loading: { flex: 1 },
   }), [colors]);
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 500);
-  }, []);
+    await loadFavorites();
+    setRefreshing(false);
+  }, [loadFavorites]);
 
   const handleVideoPress = useCallback((video) => {
-    navigation.navigate('VideoPlayer', { video });
+    // Navigate to VideoPlayer via the root navigator
+    navigation.getParent()?.navigate('Home', { screen: 'VideoPlayer', params: { video } });
   }, [navigation]);
 
   const renderItem = useCallback(({ item, index }) => (
@@ -65,7 +73,10 @@ const FavoritesScreen = React.memo(function FavoritesScreen({ navigation }) {
       video={{ ...item, favorite: true }}
       onPress={() => handleVideoPress(item)}
       onFavorite={() => toggleFavorite(item.id)}
-      style={index % 2 === 0 ? { marginLeft: SIZES.lg } : { marginRight: SIZES.lg }}
+      style={{
+        marginLeft: index % 2 === 0 ? horizontalPadding : gap / 2,
+        marginRight: index % 2 === 0 ? gap / 2 : horizontalPadding,
+      }}
     />
   ), [handleVideoPress, toggleFavorite]);
 
@@ -81,7 +92,7 @@ const FavoritesScreen = React.memo(function FavoritesScreen({ navigation }) {
       {loaded && favoriteVideos.length === 0 ? (
         <EmptyState icon="heart-broken" title="No favorites yet" message="Tap the heart icon on any video to save it here" />
       ) : !loaded ? (
-        <View style={styles.loading} />
+        <LoadingSkeleton count={6} type="card" />
       ) : (
         <FlatList
           data={favoriteVideos}

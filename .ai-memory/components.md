@@ -14,9 +14,9 @@
 | PlaylistCard | `components/PlaylistCard.js` | playlist, onPress | — | Icon + name + arrow |
 | EmptyState | `components/EmptyState.js` | icon?, title?, message? | — | Fade+slide animation |
 | LoadingSkeleton | `components/LoadingSkeleton.js` | count?, type? (card/list/short) | — | Shimmer loop |
-| PlayerControls | `components/PlayerControls.js` | playing, onPlayPause, onForward, onBackward, onFullscreen, progress, duration | — | Not currently used (YouTube iframe instead) |
 | AccessCodeCard | `components/AccessCodeCard.js` | onSubmit, loading? | error state | Shake animation |
+| MaintenanceScreen | `components/MaintenanceScreen.js` | message? | — | Full-screen overlay |
 
 ## Status
-- **Active**: VideoCard, ShortCard, CategoryRow, SectionTitle, SearchBar, Header, FavoriteButton, CategoryChip, EmptyState, LoadingSkeleton, AccessCodeCard
-- **Unused**: ProfileCard, PlayerControls, PlaylistCard (playlists screen exists but cards not linked)
+- **Active**: VideoCard, ShortCard, SectionTitle, SearchBar, Header, FavoriteButton, CategoryChip, EmptyState, LoadingSkeleton, AccessCodeCard, MaintenanceScreen, PlaylistCard, ErrorBoundary
+- **Deleted (removed)**: CategoryRow, PlayerControls, ProfileCard

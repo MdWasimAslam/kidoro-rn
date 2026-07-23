@@ -1,13 +1,40 @@
+function resolveAsyncStorage() {
+  try {
+    const mod = require('@react-native-async-storage/async-storage');
+    const instance = mod.default || mod;
+    if (instance && typeof instance.getItem === 'function') return instance;
+  } catch (e) { /* not available */ }
+  return null;
+}
+
+function getWebStorage() {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    return {
+      getItem: async (key) => window.localStorage.getItem(key),
+      setItem: async (key, value) => window.localStorage.setItem(key, value),
+      removeItem: async (key) => window.localStorage.removeItem(key),
+    };
+  }
+  return null;
+}
+
 let storageImpl = null;
 
 function getImpl() {
   if (storageImpl) return storageImpl;
 
-  if (typeof window !== 'undefined' && window.localStorage) {
+  const webStore = getWebStorage();
+  if (webStore) {
+    storageImpl = webStore;
+    return storageImpl;
+  }
+
+  const asyncStore = resolveAsyncStorage();
+  if (asyncStore) {
     storageImpl = {
-      getItem: async (key) => window.localStorage.getItem(key),
-      setItem: async (key, value) => window.localStorage.setItem(key, value),
-      removeItem: async (key) => window.localStorage.removeItem(key),
+      getItem: async (key) => asyncStore.getItem(key),
+      setItem: async (key, value) => asyncStore.setItem(key, value),
+      removeItem: async (key) => asyncStore.removeItem(key),
     };
     return storageImpl;
   }

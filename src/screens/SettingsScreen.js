@@ -14,25 +14,49 @@ import { useAppConfigContext } from '../context/AppConfigContext';
 const BADGE_THRESHOLDS = [1, 3, 7, 14, 21, 30, 50];
 function calcBadgeCount(streak) { return BADGE_THRESHOLDS.filter(t => streak >= t).length; }
 
-function SettingsScreen({ navigation }) {
+const SettingsScreen = React.memo(function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { colors, isDark, toggleTheme, statusBarStyle } = useTheme();
   const { streak } = useStreak();
   const { showYTIcon, toggleYTIcon, switching } = useYTIcon();
   const appConfig = useAppConfigContext();
-  const featuresConfig = appConfig?.features || {};
-  const [profileData, setProfileData] = useState({ name: '', avatarUrl: null, accessCode: '' });
+  const featuresConfig = appConfig?.config?.features || {};
+  const [profileData, setProfileData] = useState({ name: 'Explorer', avatarUrl: null, accessCode: '' });
   const [totalVideos, setTotalVideos] = useState(0);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   const badgeCount = useMemo(() => calcBadgeCount(streak), [streak]);
 
   useEffect(() => {
-    settingsService.getSettings().then((s) => {
-      setProfileData({ name: s.childName, avatarUrl: s.avatarUrl, accessCode: s.accessCode });
-    }).catch(() => {});
-    videoService.getVideos(1).then((videos) => {
-      setTotalVideos(Array.isArray(videos) ? videos.length : 0);
-    }).catch(() => {});
+    let cancelled = false;
+
+    // Load profile data independently from video count
+    const loadProfile = async () => {
+      try {
+        const s = await settingsService.getSettings();
+        if (!cancelled) {
+          setProfileData({ name: s.childName || 'Explorer', avatarUrl: s.avatarUrl, accessCode: s.accessCode });
+        }
+      } catch (e) {
+        if (!cancelled) setProfileData({ name: 'Explorer', avatarUrl: null, accessCode: '' });
+      }
+    };
+
+    // Load video count separately (won't block profile data if it fails)
+    const loadVideos = async () => {
+      try {
+        const videos = await videoService.getVideos(50);
+        if (!cancelled) setTotalVideos(Array.isArray(videos) ? videos.length : 0);
+      } catch (e) {
+        // video count is non-critical, keep default 0
+      }
+    };
+
+    Promise.all([loadProfile(), loadVideos()]).finally(() => {
+      if (!cancelled) setProfileLoading(false);
+    });
+
+    return () => { cancelled = true; };
   }, []);
 
   const styles = useMemo(() => StyleSheet.create({
@@ -50,17 +74,17 @@ function SettingsScreen({ navigation }) {
     avatarRing: { position: 'absolute', top: -2, left: -2, right: -2, bottom: -2, borderRadius: 34, borderWidth: 2.5, borderColor: colors.primary + '40' },
     onlineDot: { position: 'absolute', bottom: 0, right: 0, width: 16, height: 16, borderRadius: 8, backgroundColor: colors.success, borderWidth: 3, borderColor: colors.card },
     profileNameSection: { flex: 1, marginLeft: SIZES.md },
-    profileName: { color: colors.text, fontSize: 22, fontWeight: '700', lineHeight: 28 },
+    profileName: { fontFamily: 'Poppins_700Bold', color: colors.text, fontSize: 22, fontWeight: '700', lineHeight: 28 },
     codeRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-    codeLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '500', marginLeft: 4 },
-    codeValue: { color: colors.primary, fontSize: 15, fontWeight: '800', letterSpacing: 3 },
+    codeLabel: { fontFamily: 'Poppins_500Medium', color: colors.textSecondary, fontSize: 13, fontWeight: '500', marginLeft: 4 },
+    codeValue: { fontFamily: 'Poppins_800ExtraBold', color: colors.primary, fontSize: 15, fontWeight: '800', letterSpacing: 3 },
 
     // Stats
     statsRow: { flexDirection: 'row', alignItems: 'center', marginTop: SIZES.lg, paddingTop: SIZES.lg, borderTopWidth: 1, borderTopColor: colors.border },
     statItem: { flex: 1, alignItems: 'center' },
     statIconBox: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
-    statValue: { color: colors.text, fontSize: 18, fontWeight: '800', lineHeight: 24 },
-    statLabel: { color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.5 },
+    statValue: { fontFamily: 'Poppins_800ExtraBold', color: colors.text, fontSize: 18, fontWeight: '800', lineHeight: 24 },
+    statLabel: { fontFamily: 'Poppins_500Medium', color: colors.textSecondary, fontSize: 11, fontWeight: '500', marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.5 },
     statDivider: { width: 1, height: 40, backgroundColor: colors.border },
 
     // Group Sections
@@ -97,6 +121,12 @@ function SettingsScreen({ navigation }) {
       </View>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Profile Card */}
+        {profileLoading && (
+          <View style={[styles.profileCard, { padding: SIZES.lg, alignItems: 'center' }]}>
+            <Text style={{ color: colors.textSecondary, ...TYPOGRAPHY.body }}>Loading profile...</Text>
+          </View>
+        )}
+        {!profileLoading && (
         <View style={styles.profileCard}>
           <View style={styles.profileAccent} />
           <View style={styles.profileContent}>
@@ -142,6 +172,7 @@ function SettingsScreen({ navigation }) {
             </View>
           </View>
         </View>
+        )}
 
         {/* APPEARANCE SECTION */}
         <View style={styles.group}>
@@ -238,6 +269,6 @@ function SettingsScreen({ navigation }) {
       </ScrollView>
     </View>
   );
-}
+});
 
 export default SettingsScreen;

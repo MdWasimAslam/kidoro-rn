@@ -23,10 +23,11 @@
 - No `LayoutAnimation` (uses Animated API directly)
 
 ## Data
-- `videodata.json` is source of truth for seed videos
-- Videos shuffled on module load (different order each app open)
-- `getRecommendedVideos()` uses `Math.random()` sort (fresh each render)
-- AsyncStorage keys prefixed: `@kidoro_`
+- Supabase tables (`videos`, `shorts`, `categories`, `children`) are source of truth — all data fetched via REST API
+- `src/services/api.js` provides `supabaseRest()` for direct table queries and `request()` for custom backend endpoints
+- All service modules use CommonJS `require()` pattern for Metro compatibility
+- AsyncStorage keys prefixed: `@kidoro_` (`@kidoro_favorites`, `@kidoro_streak`, `@kidoro_child_session`, `@kidoro_continue_watching`, `@kidoro_analytics_queue`)
+- Favorites are LOCAL-ONLY (AsyncStorage) — `video.service.js toggleFavorite()` PATCH endpoint is dead code
 
 ## Testing
 - Jest + `jest-expo` preset

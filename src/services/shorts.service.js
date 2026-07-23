@@ -12,7 +12,6 @@ const shortsService = {
         limit: limit.toString(),
       });
     } catch (e) {
-      console.error('[shortsService.getShorts] Error:', e.message);
       return [];
     }
   },

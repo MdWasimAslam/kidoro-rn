@@ -11,7 +11,6 @@ const categoryService = {
         order: 'sort_order.asc',
       });
     } catch (e) {
-      console.error('[categoryService.getCategories] Error:', e.message);
       return [];
     }
   },

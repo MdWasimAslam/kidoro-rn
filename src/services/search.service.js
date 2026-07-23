@@ -10,9 +10,9 @@ const searchService = {
         status: 'eq.active',
         deleted_at: 'is.null',
         title: `ilike.%${q}%`,
+        order: 'created_at.desc',
       });
     } catch (e) {
-      console.error('[searchService.searchVideos] Error:', e.message);
       return [];
     }
   },

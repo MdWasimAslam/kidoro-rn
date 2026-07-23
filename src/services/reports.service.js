@@ -7,7 +7,6 @@ const reportsService = {
       if (childId) params.append('childId', childId);
       return await request(`/api/reports/dashboard?${params.toString()}`);
     } catch (e) {
-      console.error('[reportsService.getDashboardReport] Error:', e.message);
       return null;
     }
   },

@@ -4,8 +4,9 @@
 **Type**: Kids streaming/learning mobile app  
 **Platform**: React Native + Expo SDK 54  
 **Language**: JavaScript (no TypeScript)  
-**DB**: Next.js REST API + Supabase PostgreSQL  
+**DB**: Supabase PostgreSQL (direct REST) — see `docs/SUPABASE_SCHEMA.md` for full schema  
 **Backend Services**: `src/services/` (api, auth, child, video, shorts, playlist, analytics, reports, search, settings)  
+**Custom Backend (fallback only)**: Next.js REST API at `http://localhost:3000` — only used when Supabase direct insert fails  
 
 ## Key Features
 - Home screen with live backend categories, trending hero card, search

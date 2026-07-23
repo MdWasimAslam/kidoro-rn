@@ -1,11 +1,14 @@
 const storage = require('../utils/storage');
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://uhqgqllpovhoesfvkgvv.supabase.co';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_TI4B6oSjRgF1epWR5WUyog_C32HkewG';
 
 const TOKEN_KEY = '@kidoro_auth_token';
 const CHILD_KEY = '@kidoro_child_session';
+
+// In-memory cache for active child — survives even if AsyncStorage write fails
+let _cachedChild = null;
 
 async function getToken() {
   try {
@@ -16,11 +19,26 @@ async function getToken() {
 }
 
 async function getActiveChild() {
+  // Check in-memory cache first (fastest path)
+  if (_cachedChild) return _cachedChild;
   try {
     const data = await storage.getItem(CHILD_KEY);
-    return data ? JSON.parse(data) : null;
-  } catch (e) {
+    if (data) {
+      _cachedChild = JSON.parse(data);
+      return _cachedChild;
+    }
     return null;
+  } catch (e) {
+    return _cachedChild || null;
+  }
+}
+
+function setActiveChild(child) {
+  // Always cache in memory immediately
+  _cachedChild = child;
+  // Persist to storage asynchronously (non-blocking)
+  if (child) {
+    storage.setItem(CHILD_KEY, JSON.stringify(child)).catch(() => {});
   }
 }
 
@@ -53,7 +71,6 @@ async function request(endpoint, options = {}) {
     }
     return data;
   } catch (error) {
-    console.error(`[API Error] ${endpoint}:`, error.message);
     throw error;
   }
 }
@@ -73,7 +90,7 @@ async function supabaseRest(table, queryParams = {}) {
   }
   const queryString = parts.join('&');
   const url = `${SUPABASE_URL}/rest/v1/${table}${queryString ? '?' + queryString : ''}`;
-  console.log('[supabaseRest] GET', url);
+  // rest query prepared
 
   const response = await fetch(url, { headers });
   if (!response.ok) {
@@ -90,7 +107,6 @@ async function getAppConfig() {
       id: 'eq.1',
     }).then(res => res[0]?.config || null);
   } catch (e) {
-    console.error('[getAppConfig] Error:', e.message);
     return null;
   }
 }
@@ -101,8 +117,10 @@ module.exports = {
   getAppConfig,
   getToken,
   getActiveChild,
+  setActiveChild,
   TOKEN_KEY,
   CHILD_KEY,
   BASE_URL,
   SUPABASE_URL,
+  SUPABASE_ANON_KEY,
 };

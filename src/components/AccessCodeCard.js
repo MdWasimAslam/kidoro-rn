@@ -1,7 +1,7 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Animated, StyleSheet, Image } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { SIZES, TYPOGRAPHY, ELEVATION } from '../constants/theme';
+import { SIZES, TYPOGRAPHY, ELEVATION, SYSTEM_FONT } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import childService from '../services/child.service';
 
@@ -17,11 +17,11 @@ const AccessCodeCard = React.memo(function AccessCodeCard({ onSubmit, loading })
     container: { backgroundColor: colors.card, borderRadius: SIZES.radius, padding: SIZES.xl, marginHorizontal: SIZES.lg, alignItems: 'center', ...ELEVATION.level3 },
     logoContainer: { width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primary + '15', justifyContent: 'center', alignItems: 'center', marginBottom: SIZES.md, overflow: 'hidden' },
     logoImage: { width: 56, height: 56, borderRadius: 28 },
-    title: { color: colors.text, ...TYPOGRAPHY.h1, marginBottom: SIZES.xs },
+    title: { fontFamily: 'Poppins_700Bold', color: colors.text, fontSize: 22, fontWeight: '700', marginBottom: SIZES.xs },
     subtitle: { color: colors.textSecondary, ...TYPOGRAPHY.body, textAlign: 'center', marginBottom: SIZES.lg },
     inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: SIZES.radiusSm, borderWidth: 2, borderColor: colors.border, paddingHorizontal: SIZES.md, height: 56, width: '100%', marginBottom: SIZES.sm },
     inputError: { borderColor: colors.error },
-    input: { flex: 1, color: colors.text, ...TYPOGRAPHY.h4, marginLeft: SIZES.sm, letterSpacing: 4, height: '100%' },
+    input: { flex: 1, color: colors.text, fontSize: 16, fontWeight: '600', fontFamily: 'Poppins_600SemiBold', marginLeft: SIZES.sm, height: '100%', paddingVertical: 0 },
     errorRow: { flexDirection: 'row', alignItems: 'center', marginBottom: SIZES.sm, alignSelf: 'flex-start', marginLeft: 4 },
     errorText: { color: colors.error, ...TYPOGRAPHY.label, marginLeft: 4 },
     button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary, borderRadius: SIZES.radiusSm, height: 56, width: '100%', marginTop: SIZES.sm, ...ELEVATION.level2 },
@@ -47,7 +47,7 @@ const AccessCodeCard = React.memo(function AccessCodeCard({ onSubmit, loading })
         shake();
       }
     } catch (e) {
-      console.error('[AccessCodeCard] Error:', e.message);
+      // verification failed
       setError(e.message || 'Invalid Access Code');
       shake();
     }
@@ -68,7 +68,7 @@ const AccessCodeCard = React.memo(function AccessCodeCard({ onSubmit, loading })
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateX: shakeAnim }] }]}>
       <View style={styles.logoContainer}><Image source={require('../../assets/icon.png')} style={styles.logoImage} resizeMode="contain" /></View>
-      <Text style={styles.title}>Welcome to Kidoro</Text>
+      <Text style={styles.title} numberOfLines={1}>Welcome to Kidoro</Text>
       <Text style={styles.subtitle}>Ask your parent for your access code</Text>
       <View style={[styles.inputContainer, error ? styles.inputError : null]}>
         <MaterialCommunityIcons name="lock-outline" size={20} color={error ? colors.error : colors.textSecondary} />

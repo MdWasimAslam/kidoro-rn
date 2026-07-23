@@ -4,7 +4,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { COLORS, SIZES, ELEVATION } from '../constants/theme';
+import { SIZES, ELEVATION } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import HomeScreen from '../screens/HomeScreen';
 import ShortsScreen from '../screens/ShortsScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
@@ -27,7 +28,8 @@ function HomeStackScreen() {
 const Tab = createBottomTabNavigator();
 
 const TabIcon = React.memo(function TabIcon({ name, focused, color }) {
-  const scaleAnim = useRef(new Animated.Value(focused ? 1.08 : 1)).current;
+  const { colors } = useTheme();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.spring(scaleAnim, {
@@ -41,13 +43,14 @@ const TabIcon = React.memo(function TabIcon({ name, focused, color }) {
   return (
     <Animated.View style={[styles.tabItem, { transform: [{ scale: scaleAnim }] }]}>
       <MaterialCommunityIcons name={name} size={28} color={color} />
-      {focused && <View style={styles.activeDot} />}
+      {focused && <View style={[styles.activeDot, { backgroundColor: color }]} />}
     </Animated.View>
   );
 });
 
 const BottomTabs = React.memo(function BottomTabs() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   return (
     <Tab.Navigator
@@ -57,13 +60,13 @@ const BottomTabs = React.memo(function BottomTabs() {
           height: 72,
           paddingBottom: Math.max(insets.bottom, 4),
           paddingTop: 4,
-          backgroundColor: COLORS.card,
+          backgroundColor: colors.card,
           borderTopWidth: 1,
-          borderTopColor: COLORS.border,
+          borderTopColor: colors.border,
           ...ELEVATION.level2,
         },
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textSecondary,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarShowLabel: false,
         tabBarHideOnKeyboard: true,
       }}
@@ -84,5 +87,5 @@ export default BottomTabs;
 
 const styles = StyleSheet.create({
   tabItem: { alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 44 },
-  activeDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.primary, marginTop: 3 },
+  activeDot: { width: 4, height: 4, borderRadius: 2, marginTop: 3 },
 });

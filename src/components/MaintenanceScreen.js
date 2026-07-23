@@ -1,22 +1,24 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { SIZES, TYPOGRAPHY } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 
 const MaintenanceScreen = React.memo(function MaintenanceScreen({ message }) {
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background, padding: 32 },
+    title: { color: colors.text, fontSize: 24, fontWeight: '700', marginTop: 20 },
+    message: { color: colors.textSecondary, fontSize: 15, marginTop: 8, textAlign: 'center', lineHeight: 22 },
+  }), [colors]);
+
   return (
     <View style={styles.container}>
-      <MaterialCommunityIcons name="tools" size={64} color="#FF4D4D" />
+      <MaterialCommunityIcons name="wrench-outline" size={80} color={colors.primary} />
       <Text style={styles.title}>Under Maintenance</Text>
-      <Text style={styles.message}>{message || "We're making things better. Check back soon."}</Text>
+      <Text style={styles.message}>{message || 'We\'ll be back soon!'}</Text>
     </View>
   );
 });
 
 export default MaintenanceScreen;
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', padding: SIZES.xxl },
-  title: { ...TYPOGRAPHY.h2, color: '#121212', marginTop: SIZES.lg },
-  message: { ...TYPOGRAPHY.body, color: '#6B7280', textAlign: 'center', marginTop: SIZES.sm, maxWidth: 280 },
-});

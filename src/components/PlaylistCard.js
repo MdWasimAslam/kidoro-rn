@@ -8,7 +8,7 @@ const PlaylistCard = React.memo(function PlaylistCard({ playlist, onPress }) {
   const { colors } = useTheme();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const palette = useMemo(() => [colors.primary, colors.blue, colors.green, colors.purple, colors.secondary], [colors]);
-  const bgColor = palette[parseInt(playlist.id) % palette.length];
+  const bgColor = palette[(parseInt(playlist.id, 10) || 0) % palette.length] || colors.primary;
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: SIZES.radius, padding: SIZES.md, marginHorizontal: SIZES.md, marginBottom: SIZES.sm, ...ELEVATION.level1 },

@@ -1,4 +1,4 @@
-const { supabaseRest } = require('./api');
+const { supabaseRest, setActiveChild } = require('./api');
 const storage = require('../utils/storage');
 const { CHILD_KEY } = require('./api');
 
@@ -13,7 +13,6 @@ const childService = {
         order: 'created_at.asc',
       });
     } catch (e) {
-      console.error('[childService.getChildren] Error:', e.message);
       return [];
     }
   },
@@ -23,25 +22,19 @@ const childService = {
       const results = await supabaseRest('children', {
         select: '*',
         access_code: `eq.${pin}`,
+        status: 'eq.active',
+        deleted_at: 'is.null',
       });
-
-      console.log('[verifyAccessCode] pin:', pin, 'results:', JSON.stringify(results));
 
       if (Array.isArray(results) && results.length > 0) {
         const child = results[0];
-        console.log('[verifyAccessCode] matched child:', JSON.stringify(child));
-        try {
-          await storage.setItem(CHILD_KEY, JSON.stringify(child));
-        } catch (storageErr) {
-          console.warn('[verifyAccessCode] storage.setItem failed:', storageErr.message);
-        }
+        // Cache in memory AND persist to storage (belt-and-suspenders)
+        setActiveChild(child);
         return { success: true, child };
       }
 
-      console.log('[verifyAccessCode] no match found');
       return { success: false, error: 'Invalid PIN code' };
     } catch (e) {
-      console.error('[childService.verifyAccessCode] Error:', e.message);
 
       try {
         const storedChild = await storage.getItem(CHILD_KEY);
@@ -59,10 +52,9 @@ const childService = {
 
   selectChild: async (childObj) => {
     try {
-      await storage.setItem(CHILD_KEY, JSON.stringify(childObj));
+      setActiveChild(childObj);
       return true;
     } catch (e) {
-      console.error('[childService.selectChild] Error:', e.message);
       return false;
     }
   },

@@ -22,7 +22,8 @@ The **App Management System** delivers server-driven Remote Configuration, Over-
 | **`PUT`** | `/api/app-config` | Update application configuration parameters | Admin / Public dev | `JSON` |
 
 #### Base URL Setup
-- **Development (Android Emulator)**: `http://10.0.2.2:3000/api/app-config`
+- **Development (local)**: `http://localhost:3000/api/app-config`
+- **Development (Android Emulator)**: `EXPO_PUBLIC_API_URL=http://10.0.2.2:3000` (env override required)
 - **Development (Physical Device)**: `http://<YOUR_LOCAL_IP>:3000/api/app-config`
 - **Production**: `https://<YOUR_NEXTJS_DOMAIN>/api/app-config`
 

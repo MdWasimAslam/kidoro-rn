@@ -6,6 +6,7 @@ import SplashScreen from '../screens/SplashScreen';
 import AccessCodeScreen from '../screens/AccessCodeScreen';
 import BottomTabs from './BottomTabs';
 import PlaylistsScreen from '../screens/PlaylistsScreen';
+import GamesScreen from '../screens/GamesScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +28,7 @@ const AppNavigator = React.memo(function AppNavigator() {
         <Stack.Screen name="AccessCode" component={AccessCodeScreen} />
         <Stack.Screen name="MainTabs" component={BottomTabs} />
         <Stack.Screen name="Playlists" component={PlaylistsScreen} />
+        <Stack.Screen name="Games" component={GamesScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

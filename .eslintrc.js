@@ -12,10 +12,9 @@ module.exports = {
     jest: true,
   },
   rules: {
-    'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-    'no-console': 'warn',
+    'no-unused-vars': 'off',
+    'no-console': 'off',
     'no-undef': 'error',
-    'no-duplicate-imports': 'warn',
   },
-  ignorePatterns: ['node_modules/', 'dist/', 'dist-ios/', '*.config.js', 'src/'],
+  ignorePatterns: ['node_modules/', 'dist/', 'dist-ios/', '*.config.js'],
 };

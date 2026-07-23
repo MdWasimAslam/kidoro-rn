@@ -55,7 +55,7 @@ export default function useYTIcon() {
       setShowYTIcon(next);
       await setItem(YT_ICON_KEY, next ? 'true' : 'false');
     } catch (e) {
-      console.warn('App icon switch failed:', e);
+      // icon switch failed silently
     } finally {
       setSwitching(false);
     }

@@ -1,8 +1,9 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, Animated, StyleSheet, StatusBar, Image, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../constants/theme';
+import analyticsService from '../services/analytics.service';
+import { getActiveChild } from '../services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -15,6 +16,8 @@ const SplashScreen = React.memo(function SplashScreen({ navigation }) {
   const dotsAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    let cancelled = false;
+
     Animated.sequence([
       Animated.parallel([
         Animated.spring(logoScale, { toValue: 1, friction: 4, tension: 40, useNativeDriver: true }),
@@ -28,23 +31,21 @@ const SplashScreen = React.memo(function SplashScreen({ navigation }) {
       Animated.timing(dotsAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
     ]).start();
 
-    const analyticsService = require('../services/analytics.service');
     analyticsService.flushQueue();
 
     const checkSessionAndNavigate = async () => {
       try {
-        const { getActiveChild } = require('../services/api');
         const activeChild = await getActiveChild();
-        if (activeChild && activeChild.id && activeChild.access_code) {
+        if (!cancelled && activeChild && activeChild.id && activeChild.access_code) {
           navigation?.replace('MainTabs');
           return;
         }
       } catch (e) { /* ignore */ }
-      navigation?.replace('AccessCode');
+      if (!cancelled) navigation?.replace('AccessCode');
     };
 
     const t = setTimeout(checkSessionAndNavigate, 2000);
-    return () => clearTimeout(t);
+    return () => { cancelled = true; clearTimeout(t); };
   }, []);
 
   return (
@@ -108,6 +109,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   title: {
+    fontFamily: 'Poppins_800ExtraBold',
     fontSize: 44,
     fontWeight: '800',
     color: '#FFFFFF',
@@ -117,6 +119,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 8,
   },
   tagline: {
+    fontFamily: 'Poppins_500Medium',
     fontSize: 16,
     color: 'rgba(255,255,255,0.8)',
     marginTop: 12,
@@ -150,6 +153,7 @@ const styles = StyleSheet.create({
     bottom: 60,
   },
   footerText: {
+    fontFamily: 'Poppins_400Regular',
     fontSize: 13,
     color: 'rgba(255,255,255,0.5)',
     letterSpacing: 1,

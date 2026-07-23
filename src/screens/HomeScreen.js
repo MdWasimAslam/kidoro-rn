@@ -11,6 +11,7 @@ import { useAppConfigContext } from '../context/AppConfigContext';
 import videoService from '../services/video.service';
 import categoryService from '../services/category.service';
 import { getActiveChild } from '../services/api';
+import { useContinueWatchingContext } from '../context/ContinueWatchingContext';
 import VideoCard from '../components/VideoCard';
 
 const PAGE_SIZE = 20;
@@ -32,13 +33,16 @@ const HomeScreen = React.memo(function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { isFavorite, toggleFavorite } = useFavoritesContext();
   const appConfig = useAppConfigContext();
-  const homeConfig = appConfig?.home || {};
-  const featuresConfig = appConfig?.features || {};
+  const homeConfig = appConfig?.config?.home || {};
+  const featuresConfig = appConfig?.config?.features || {};
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const greetingAnim = useRef(new Animated.Value(0)).current;
   const shownIds = useRef(new Set());
+
+  const { recentVideos: continueWatchVideos, loaded: continueWatchLoaded } = useContinueWatchingContext();
 
   const [recommendedList, setRecommendedList] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
@@ -67,8 +71,11 @@ const HomeScreen = React.memo(function HomeScreen({ navigation }) {
         title: v.title,
         thumbnail: v.thumbnail_url || `https://img.youtube.com/vi/${v.video_id}/hqdefault.jpg`,
         youtubeId: v.video_id,
+        channel: v.channel || '',
+        views: v.views || 0,
         category: v.categories?.name || 'General',
         favorite: v.favorite || false,
+        duration: v.duration || '',
       }));
 
       for (let i = formattedVideos.length - 1; i > 0; i--) {
@@ -80,7 +87,7 @@ const HomeScreen = React.memo(function HomeScreen({ navigation }) {
       setCategoriesList(fetchedCategories);
       setTrending(featured.length > 0 ? [featured[0]] : formattedVideos.slice(0, 1));
     } catch (e) {
-      console.error('[HomeScreen] Error loading data:', e.message);
+      // data load error
     }
   }, []);
 
@@ -89,12 +96,22 @@ const HomeScreen = React.memo(function HomeScreen({ navigation }) {
     Animated.spring(greetingAnim, { toValue: 1, friction: 6, tension: 40, useNativeDriver: true }).start();
   }, [loadBackendData]);
 
-  const continueWatching = useMemo(() => recommendedList.slice(0, 5).map(v => ({ ...v, favorite: isFavorite(v.id) })), [recommendedList, isFavorite]);
-  const recommendedGrid = useMemo(() => recommendedList.slice(5), [recommendedList]);
+  const continueWatching = useMemo(() => {
+    if (!continueWatchLoaded) return [];
+    return continueWatchVideos.slice(0, 5).map(v => ({ ...v, favorite: isFavorite(v.id) }));
+  }, [continueWatchVideos, continueWatchLoaded, isFavorite]);
+  const recommendedGrid = useMemo(() => {
+    if (selectedCategory) return recommendedList.filter(v => v.category === selectedCategory);
+    return recommendedList;
+  }, [recommendedList, selectedCategory]);
 
   const handleSearch = useCallback(() => navigation.navigate('Search', {}), [navigation]);
   const handleVideoPress = useCallback((video) => navigation.navigate('VideoPlayer', { video }), [navigation]);
   const handleFavorite = useCallback((videoId) => toggleFavorite(videoId), [toggleFavorite]);
+
+  const handleCategoryPress = useCallback((cat) => {
+    setSelectedCategory(prev => prev === cat.name ? null : cat.name);
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -144,18 +161,21 @@ const HomeScreen = React.memo(function HomeScreen({ navigation }) {
         {homeConfig.showCategories !== false && (
         <Animated.View style={{ opacity: greetingAnim }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow} style={{ marginTop: SIZES.md }}>
-            {categoriesList.slice(0, 8).map((cat) => (
-              <TouchableOpacity key={cat.id} style={[styles.chip]} accessibilityLabel={cat.name} activeOpacity={0.7}>
-                <MaterialCommunityIcons name={normalizeIcon(cat.icon)} size={16} color={COLORS.textSecondary} style={{ marginRight: SIZES.xs }} />
-                <Text style={styles.chipText}>{cat.name}</Text>
-              </TouchableOpacity>
-            ))}
+            {categoriesList.slice(0, 8).map((cat) => {
+              const isActive = selectedCategory === cat.name;
+              return (
+                <TouchableOpacity key={cat.id} onPress={() => handleCategoryPress(cat)} style={[styles.chip, isActive && styles.chipActive]} accessibilityLabel={`Filter by ${cat.name}`} activeOpacity={0.7}>
+                  <MaterialCommunityIcons name={normalizeIcon(cat.icon)} size={16} color={isActive ? '#FFFFFF' : COLORS.textSecondary} style={{ marginRight: SIZES.xs }} />
+                  <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{cat.name}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </Animated.View>
         )}
       </View>
 
-      {homeConfig.showFeatured !== false && homeConfig.showBanner !== false && (
+      {!selectedCategory && homeConfig.showFeatured !== false && homeConfig.showBanner !== false && (
       <View style={{ paddingHorizontal: horizontalPadding, marginBottom: SIZES.md }}>
         {trending.map((v) => (
           <TouchableOpacity key={v.id} onPress={() => handleVideoPress(v)} activeOpacity={0.95} accessibilityLabel={`Watch ${v.title}`}>
@@ -175,7 +195,7 @@ const HomeScreen = React.memo(function HomeScreen({ navigation }) {
       </View>
       )}
 
-      {homeConfig.showContinueWatching !== false && continueWatching.length > 0 && (
+      {!selectedCategory && homeConfig.showContinueWatching !== false && continueWatching.length > 0 && (
         <View style={styles.continueSection}>
           <Text style={[styles.sectionTitle, { paddingHorizontal: horizontalPadding }]}>Continue Watching</Text>
           <FlatList
@@ -193,11 +213,13 @@ const HomeScreen = React.memo(function HomeScreen({ navigation }) {
         </View>
       )}
 
-      <View style={{ paddingHorizontal: horizontalPadding, marginTop: SIZES.lg, marginBottom: SIZES.md }}>
+      {!selectedCategory && (
+      <View style={{ paddingHorizontal: horizontalPadding }}>
         <Text style={styles.sectionTitle}>Recommended For You</Text>
       </View>
+      )}
     </View>
-  ), [insets.top, horizontalPadding, cardWidth, gap, greetingAnim, heroH, trending, continueWatching, handleSearch, handleVideoPress, handleFavorite, isFavorite, childName, avatarUrl, categoriesList]);
+  ), [insets.top, horizontalPadding, cardWidth, gap, greetingAnim, heroH, trending, continueWatching, handleSearch, handleVideoPress, handleFavorite, isFavorite, childName, avatarUrl, categoriesList, selectedCategory, handleCategoryPress]);
 
   const ListFooter = useCallback(() => {
     if (!hasMore) return <Text style={styles.endText}>You're all caught up! 🎉</Text>;
@@ -243,7 +265,9 @@ const styles = StyleSheet.create({
   searchPlaceholder: { color: COLORS.textSecondary, ...TYPOGRAPHY.body, flex: 1 },
   chipRow: { gap: SIZES.sm, paddingVertical: SIZES.xs },
   chip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SIZES.md, paddingVertical: SIZES.sm, borderRadius: 20, backgroundColor: COLORS.surface, borderWidth: 1.5, borderColor: COLORS.border },
+  chipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   chipText: { color: COLORS.textSecondary, ...TYPOGRAPHY.caption },
+  chipTextActive: { color: '#FFFFFF' },
   sectionTitle: { color: COLORS.text, ...TYPOGRAPHY.h3, marginBottom: SIZES.sm },
   continueSection: { marginBottom: SIZES.sm },
   heroCard: { borderRadius: SIZES.radiusLg, overflow: 'hidden', ...ELEVATION.level2 },

@@ -62,8 +62,8 @@ export default function useStreak() {
           } else {
             // ── Truly first visit ever ──
             await setItem(STREAK_KEY, '1');
-            await setItem(LAST_VISIT_KEY, today);
-            setStreak(1);
+            setStreak(1); // Set state first for immediate UI update
+            await setItem(LAST_VISIT_KEY, today); // Then update storage
           }
         } else if (storedLastVisit === today) {
           // ── Already visited today — keep streak as-is ──

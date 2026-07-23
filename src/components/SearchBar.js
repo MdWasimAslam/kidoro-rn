@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { SIZES, TYPOGRAPHY, ELEVATION } from '../constants/theme';
+import { SIZES, TYPOGRAPHY, ELEVATION, SYSTEM_FONT } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 
 const SearchBar = React.memo(function SearchBar({ onSearch, onVoicePress, placeholder }) {
@@ -15,7 +15,7 @@ const SearchBar = React.memo(function SearchBar({ onSearch, onVoicePress, placeh
     container: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: SIZES.radiusMd, paddingHorizontal: SIZES.md, height: 52, borderWidth: 1.5, borderColor: colors.border, ...ELEVATION.level1 },
     containerFocused: { borderColor: colors.primary, backgroundColor: colors.card, ...ELEVATION.level2 },
     searchIcon: { marginRight: SIZES.sm },
-    input: { flex: 1, color: colors.text, ...TYPOGRAPHY.body, height: '100%', paddingVertical: 0 },
+    input: { flex: 1, color: colors.text, fontSize: 15, fontWeight: '400', fontFamily: SYSTEM_FONT, height: '100%', paddingVertical: 0 },
     actionBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginLeft: SIZES.xs },
   }), [colors]);
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView, Animated, StyleSheet, StatusBar, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import YoutubeIframe from 'react-native-youtube-iframe';
@@ -8,6 +8,7 @@ import { useTheme } from '../context/ThemeContext';
 import videoService from '../services/video.service';
 import analyticsService from '../services/analytics.service';
 import { useFavoritesContext } from '../context/FavoritesContext';
+import { useContinueWatchingContext } from '../context/ContinueWatchingContext';
 import VideoCard from '../components/VideoCard';
 
 const PulseLoader = React.memo(function PulseLoader() {
@@ -59,6 +60,7 @@ const VideoPlayerScreen = React.memo(function VideoPlayerScreen({ route, navigat
   const { colors } = useTheme();
   const rawVideo = route?.params?.video || null;
   const { isFavorite, toggleFavorite } = useFavoritesContext();
+  const { recordWatched } = useContinueWatchingContext();
   const [playing, setPlaying] = useState(true);
   const [playerReady, setPlayerReady] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -66,14 +68,79 @@ const VideoPlayerScreen = React.memo(function VideoPlayerScreen({ route, navigat
   const [currentVideo, setCurrentVideo] = useState(rawVideo);
   const [suggestedVideos, setSuggestedVideos] = useState([]);
 
+  // Play state tracking refs for analytics
+  const startTimeRef = useRef(null);
+  const accumulatedTimeRef = useRef(0);
+  const isPlayingRef = useRef(false);
+  const currentVideoRef = useRef(currentVideo);
+
+  currentVideoRef.current = currentVideo;
+
+  // Single source of truth for play/pause time tracking
+  const handlePlayStateChange = useCallback((isPlaying) => {
+    if (isPlaying === isPlayingRef.current) return;
+    isPlayingRef.current = isPlaying;
+
+    if (isPlaying) {
+      startTimeRef.current = Date.now();
+    } else {
+      if (startTimeRef.current) {
+        const elapsed = (Date.now() - startTimeRef.current) / 1000;
+        accumulatedTimeRef.current += elapsed;
+        startTimeRef.current = null;
+      }
+    }
+  }, []);
+
+  // Sync play state to the callback on every change
+  React.useEffect(() => {
+    handlePlayStateChange(playing && playerReady);
+  }, [playing, playerReady, handlePlayStateChange]);
+
+  // Stable onChangeState handler — syncs playing state with YouTube player for all events
+  const handleYoutubeStateChange = useCallback((e) => {
+    if (e === 'playing') {
+      setPlaying(true);
+    } else if (e === 'paused') {
+      setPlaying(false);
+    } else if (e === 'ended') {
+      setPlaying(false);
+      const video = currentVideoRef.current;
+      const totalDuration = video.duration || 0;
+      analyticsService.trackEvent({
+        event_name: 'video_completed',
+        video_id: video.id,
+        duration_seconds: totalDuration,
+        completion_pct: 100,
+      });
+    }
+  }, []);
+
+  // Main analytics effect: track start, watch time on unmount, reset for new video
   React.useEffect(() => {
     let mounted = true;
+
     analyticsService.trackEvent({
       event_name: 'video_started',
       video_id: currentVideo.id,
       duration_seconds: 0,
       completion_pct: 0,
     });
+
+    // Record in continue-watching history
+    recordWatched({
+      id: currentVideo.id,
+      title: currentVideo.title,
+      thumbnail: currentVideo.thumbnail,
+      youtubeId: currentVideo.youtubeId,
+      duration: currentVideo.duration || 0,
+      channel: currentVideo.channel || '',
+      views: currentVideo.views || 0,
+      category: currentVideo.category || 'General',
+    });
+
+    // Reset accumulated time for the new video (play state managed by handlePlayStateChange)
+    accumulatedTimeRef.current = 0;
 
     videoService.getVideos(10).then(res => {
       if (mounted && res) {
@@ -82,14 +149,40 @@ const VideoPlayerScreen = React.memo(function VideoPlayerScreen({ route, navigat
           title: v.title,
           thumbnail: v.thumbnail_url || `https://img.youtube.com/vi/${v.video_id}/hqdefault.jpg`,
           youtubeId: v.video_id,
+          channel: v.channel || '',
+          views: v.views || 0,
           category: v.categories?.name || 'General',
+          duration: v.duration,
         }));
         setSuggestedVideos(formatted.filter(v => v.id !== currentVideo.id));
       }
     });
 
-    return () => { mounted = false; };
-  }, [currentVideo.id]);
+    return () => {
+      mounted = false;
+      // Flush any remaining elapsed time before unmount
+      let elapsed = 0;
+      if (isPlayingRef.current && startTimeRef.current) {
+        elapsed = (Date.now() - startTimeRef.current) / 1000;
+      }
+      const totalWatched = Math.round(accumulatedTimeRef.current + elapsed);
+      const video = currentVideoRef.current;
+      const totalDuration = parseFloat(video.duration) || 0;
+      const completionPct = totalDuration > 0 ? Math.min(100, Math.round((totalWatched / totalDuration) * 100)) : 0;
+
+      if (totalWatched > 0) {
+        analyticsService.trackEvent({
+          event_name: 'video_watched',
+          video_id: video.id,
+          duration_seconds: totalWatched,
+          completion_pct: completionPct,
+        });
+      }
+      // Clear refs so handlePlayStateChange doesn't double-count the same time
+      isPlayingRef.current = false;
+      startTimeRef.current = null;
+    };
+  }, [currentVideo.id, recordWatched]);
 
   const styles = useMemo(() => StyleSheet.create({
     screen: { flex: 1, backgroundColor: '#000' },
@@ -101,17 +194,7 @@ const VideoPlayerScreen = React.memo(function VideoPlayerScreen({ route, navigat
     infoContainer: { padding: SIZES.md },
     title: { color: colors.text, ...TYPOGRAPHY.h2, lineHeight: 26 },
     metaRow: { flexDirection: 'row', alignItems: 'center', marginTop: SIZES.xs },
-    views: { color: colors.textSecondary, ...TYPOGRAPHY.caption },
-    dot: { color: colors.textSecondary, marginHorizontal: SIZES.xs },
     category: { color: colors.primary, ...TYPOGRAPHY.label },
-    actionRow: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: SIZES.md, borderTopWidth: 1, borderTopColor: colors.border, marginTop: SIZES.md },
-    actionBtn: { alignItems: 'center', padding: SIZES.sm },
-    actionText: { color: colors.textSecondary, ...TYPOGRAPHY.labelBold, marginTop: 4 },
-    channelRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: SIZES.md, borderTopWidth: 1, borderTopColor: colors.border },
-    channelAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface },
-    channelInfo: { flex: 1, marginLeft: SIZES.sm },
-    channelName: { color: colors.text, ...TYPOGRAPHY.h4 },
-    channelSubs: { color: colors.textSecondary, ...TYPOGRAPHY.caption },
     descriptionBox: { backgroundColor: colors.surface, borderRadius: SIZES.radiusSm, padding: SIZES.md },
     descriptionText: { color: colors.text, ...TYPOGRAPHY.body, lineHeight: 20 },
     suggestedSection: { paddingTop: SIZES.md },
@@ -130,10 +213,6 @@ const VideoPlayerScreen = React.memo(function VideoPlayerScreen({ route, navigat
     Animated.timing(thumbnailOpacity, { toValue: 0, duration: 300, useNativeDriver: true }).start();
   };
 
-  const favorite = isFavorite(currentVideo.id);
-
-  const handleFavorite = () => { toggleFavorite(currentVideo.id); };
-
   const handleVideoPress = (v) => {
     setCurrentVideo(v); setPlaying(true); setPlayerReady(false);
     thumbnailOpacity.setValue(1);
@@ -148,12 +227,13 @@ const VideoPlayerScreen = React.memo(function VideoPlayerScreen({ route, navigat
             <View style={[styles.playerArea, { width, height: PLAYER_HEIGHT, marginTop: insets.top }]}>
               {currentVideo && (
               <YoutubeIframe
+                key={currentVideo.id}
                 videoId={currentVideo.youtubeId}
                 height={PLAYER_HEIGHT}
                 width={width}
-                play={playing && playerReady}
-                 onReady={handlePlayerReady}
-                onChangeState={(e) => { if (e === 'ended') setPlaying(false); }}
+                play={playerReady}
+                onReady={handlePlayerReady}
+                onChangeState={handleYoutubeStateChange}
               />
               )}
               {currentVideo && !playerReady && (
@@ -174,17 +254,6 @@ const VideoPlayerScreen = React.memo(function VideoPlayerScreen({ route, navigat
             <Text style={styles.title}>{currentVideo.title}</Text>
             <View style={styles.metaRow}>
               <Text style={styles.category}>{currentVideo.category || ''}</Text>
-            </View>
-
-            <View style={styles.actionRow}>
-              <TouchableOpacity style={styles.actionBtn} onPress={() => setPlaying(!playing)} accessibilityLabel={playing ? 'Pause' : 'Play'}>
-                <MaterialCommunityIcons name={playing ? 'pause-circle' : 'play-circle'} size={28} color={colors.text} />
-                <Text style={styles.actionText}>{playing ? 'Pause' : 'Play'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionBtn} onPress={handleFavorite} accessibilityLabel={favorite ? 'Remove from favorites' : 'Add to favorites'}>
-                <MaterialCommunityIcons name={favorite ? 'heart' : 'heart-outline'} size={28} color={favorite ? colors.primary : colors.text} />
-                <Text style={styles.actionText}>{favorite ? 'Favorited' : 'Favorite'}</Text>
-              </TouchableOpacity>
             </View>
 
             {currentVideo.description ? (

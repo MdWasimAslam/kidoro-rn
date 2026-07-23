@@ -1,12 +1,10 @@
 import React, { useRef, useEffect, useMemo } from 'react';
-import { Animated, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { SIZES } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 
 const LoadingSkeleton = React.memo(function LoadingSkeleton({ count = 6, type = 'card', style }) {
   const { colors } = useTheme();
-  const { width } = useWindowDimensions();
-  const cardW = type === 'card' ? (width - SIZES.md * 2 - SIZES.sm) / 2 : undefined;
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: SIZES.md, gap: SIZES.sm },

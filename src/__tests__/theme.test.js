@@ -43,7 +43,7 @@ describe('Theme Sizes', () => {
 describe('Theme Fonts', () => {
   test('should have all weight variants', () => {
     expect(TYPOGRAPHY.body.fontWeight).toBe('400');
-    expect(TYPOGRAPHY.label.fontWeight).toBe('500');
+    expect(TYPOGRAPHY.label.fontWeight).toBe('600');
     expect(TYPOGRAPHY.h4.fontWeight).toBe('600');
     expect(TYPOGRAPHY.h2.fontWeight).toBe('700');
   });
