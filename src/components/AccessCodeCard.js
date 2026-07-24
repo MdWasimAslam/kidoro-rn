@@ -14,10 +14,10 @@ const AccessCodeCard = React.memo(function AccessCodeCard({ onSubmit, loading })
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   const styles = useMemo(() => StyleSheet.create({
-    container: { backgroundColor: colors.card, borderRadius: SIZES.radius, padding: SIZES.xl, marginHorizontal: SIZES.lg, alignItems: 'center', ...ELEVATION.level3 },
-    logoContainer: { width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primary + '15', justifyContent: 'center', alignItems: 'center', marginBottom: SIZES.md, overflow: 'hidden' },
-    logoImage: { width: 56, height: 56, borderRadius: 28 },
-    title: { fontFamily: 'Poppins_700Bold', color: colors.text, fontSize: 22, fontWeight: '700', marginBottom: SIZES.xs },
+    container: { backgroundColor: colors.card, borderRadius: SIZES.radiusLg, marginHorizontal: SIZES.lg, alignItems: 'center', overflow: 'hidden', ...ELEVATION.level3 },
+    illustration: { width: '100%', height: 160 },
+    cardBody: { padding: SIZES.lg, width: '100%', alignItems: 'center' },
+    title: { fontFamily: 'Poppins_700Bold', color: colors.text, fontSize: 22, fontWeight: '700', marginBottom: SIZES.xs, marginTop: SIZES.xs },
     subtitle: { color: colors.textSecondary, ...TYPOGRAPHY.body, textAlign: 'center', marginBottom: SIZES.lg },
     inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: SIZES.radiusSm, borderWidth: 2, borderColor: colors.border, paddingHorizontal: SIZES.md, height: 56, width: '100%', marginBottom: SIZES.sm },
     inputError: { borderColor: colors.error },
@@ -67,22 +67,24 @@ const AccessCodeCard = React.memo(function AccessCodeCard({ onSubmit, loading })
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateX: shakeAnim }] }]}>
-      <View style={styles.logoContainer}><Image source={require('../../assets/icon.png')} style={styles.logoImage} resizeMode="contain" /></View>
-      <Text style={styles.title} numberOfLines={1}>Welcome to Kidoro</Text>
-      <Text style={styles.subtitle}>Ask your parent for your access code</Text>
-      <View style={[styles.inputContainer, error ? styles.inputError : null]}>
-        <MaterialCommunityIcons name="lock-outline" size={20} color={error ? colors.error : colors.textSecondary} />
-        <TextInput style={styles.input} placeholder="Enter Access Code" placeholderTextColor={colors.textSecondary} value={code} onChangeText={handleChange} keyboardType="number-pad" secureTextEntry maxLength={6} accessibilityLabel="Access code input" />
-      </View>
-      {error ? (
-        <View style={styles.errorRow}>
-          <MaterialCommunityIcons name="alert-circle" size={16} color={colors.error} />
-          <Text style={styles.errorText}>{error}</Text>
+      <Image source={require('../../assets/welcome_illustration.png')} style={styles.illustration} resizeMode="cover" />
+      <View style={styles.cardBody}>
+        <Text style={styles.title} numberOfLines={1}>Welcome to Kidoro</Text>
+        <Text style={styles.subtitle}>Ask your parent for your access code</Text>
+        <View style={[styles.inputContainer, error ? styles.inputError : null]}>
+          <MaterialCommunityIcons name="lock-outline" size={20} color={error ? colors.error : colors.textSecondary} />
+          <TextInput style={styles.input} placeholder="Enter Access Code" placeholderTextColor={colors.textSecondary} value={code} onChangeText={handleChange} keyboardType="number-pad" secureTextEntry maxLength={6} accessibilityLabel="Access code input" />
         </View>
-      ) : null}
-      <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleSubmit} disabled={loading} accessibilityLabel="Continue" activeOpacity={0.8}>
-        {loading ? <Text style={styles.buttonText}>Checking...</Text> : <><Text style={styles.buttonText}>Continue</Text><MaterialCommunityIcons name="arrow-right" size={24} color="#FFF" /></>}
-      </TouchableOpacity>
+        {error ? (
+          <View style={styles.errorRow}>
+            <MaterialCommunityIcons name="alert-circle" size={16} color={colors.error} />
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        ) : null}
+        <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleSubmit} disabled={loading} accessibilityLabel="Continue" activeOpacity={0.8}>
+          {loading ? <Text style={styles.buttonText}>Checking...</Text> : <><Text style={styles.buttonText}>Continue</Text><MaterialCommunityIcons name="arrow-right" size={24} color="#FFF" /></>}
+        </TouchableOpacity>
+      </View>
     </Animated.View>
   );
 });

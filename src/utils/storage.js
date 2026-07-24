@@ -13,6 +13,7 @@ function getWebStorage() {
       getItem: async (key) => window.localStorage.getItem(key),
       setItem: async (key, value) => window.localStorage.setItem(key, value),
       removeItem: async (key) => window.localStorage.removeItem(key),
+      clear: async () => window.localStorage.clear(),
     };
   }
   return null;
@@ -35,6 +36,7 @@ function getImpl() {
       getItem: async (key) => asyncStore.getItem(key),
       setItem: async (key, value) => asyncStore.setItem(key, value),
       removeItem: async (key) => asyncStore.removeItem(key),
+      clear: async () => asyncStore.clear(),
     };
     return storageImpl;
   }
@@ -44,6 +46,7 @@ function getImpl() {
     getItem: async (key) => mem[key] || null,
     setItem: async (key, value) => { mem[key] = value; },
     removeItem: async (key) => { delete mem[key]; },
+    clear: async () => { for (const k in mem) delete mem[k]; },
   };
   return storageImpl;
 }
@@ -57,5 +60,8 @@ module.exports = {
   },
   removeItem: async (key) => {
     try { await getImpl().removeItem(key); } catch (e) { /* ignore */ }
+  },
+  clear: async () => {
+    try { await getImpl().clear(); } catch (e) { /* ignore */ }
   },
 };

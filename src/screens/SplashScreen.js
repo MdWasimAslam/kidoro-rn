@@ -37,8 +37,25 @@ const SplashScreen = React.memo(function SplashScreen({ navigation }) {
       try {
         const activeChild = await getActiveChild();
         if (!cancelled && activeChild && activeChild.id && activeChild.access_code) {
-          navigation?.replace('MainTabs');
-          return;
+          try {
+            const childService = require('../services/child.service');
+            const validation = await childService.verifyAccessCode(activeChild.access_code);
+            if (validation.success && !validation.offline) {
+              navigation?.replace('MainTabs');
+              return;
+            } else if (!validation.success) {
+              const authService = require('../services/auth.service');
+              await authService.logout();
+            } else {
+              // validation was offline success
+              navigation?.replace('MainTabs');
+              return;
+            }
+          } catch (e) {
+            // Network failure fallback - allow offline access
+            navigation?.replace('MainTabs');
+            return;
+          }
         }
       } catch (e) { /* ignore */ }
       if (!cancelled) navigation?.replace('AccessCode');

@@ -1,5 +1,24 @@
 # Change Log
 
+### 2026-07-24 — Fix Multi-Tenant Data Leak & Restored Admin Visibility (Kidoro Next + React Native)
+- **Added**: Supabase migration `009_multi_tenant_isolation.sql` adding `access_key` to all parent-owned content/tables, migrating existing records, and creating trigger to auto-populate `access_key` on insert from parent profiles.
+- **Added**: Supabase migration `010_tenant_isolation_hardening.sql` enforcing RLS policies across all tables, including a secure `is_admin()` bypass for system administrators.
+- **Added**: Supabase migration `011_reset_user_data.sql` introducing a secure administrative `reset_user_data()` RPC.
+- **Fixed**: Enforced backend RLS policies using parent profile `access_key` instead of simple `parent_id` matching, with full admin override permissions.
+- **Fixed**: Next.js API routes (`api.js`, `dashboard/route.js`, `export/route.js`, `track/route.js`) modified to fetch parent profile `access_key` server-side and filter all data queries by `access_key`.
+- **Fixed**: Next.js client-side [api.js](file:///d:/Self_Learning/kidora-next/src/services/api.js) TypeError shadowing bug where calling shadowed `sb()` function inside `getCurrentUserRole` / `getCurrentUserAccessKey` threw exceptions and returned `0` metrics.
+- **Added**: Administrative **Reset User Data** option under parents list in [admin/page.js](file:///d:/Self_Learning/kidora-next/src/app/%28dashboard%29/admin/page.js) utilizing a custom UI `ConfirmModal`.
+- **Added**: Editable parent name settings form in [settings/page.js](file:///d:/Self_Learning/kidora-next/src/app/%28dashboard%29/settings/page.js) with realtime header refreshes.
+- **Added**: Complete Forgot Password & Password Reset recovery flow with form validation schemas, security checks, and password strength meters.
+- **Fixed**: React Native `supabaseRest` utility modified to automatically fetch and filter queries using the active child's `access_key` for tenant isolation.
+- **Fixed**: React Native `auth.service.js` `logout()` updated to completely clear AsyncStorage/localStorage, resolving state leakages.
+- **Fixed**: Local caches (`useFavorites.js` and `ContinueWatchingContext.js`) updated to scope storage keys by parent `access_key` (`@kidoro_favorites_${accessKey}`) and automatically reload on child session changes.
+- **Fixed**: YouTube app icon assets copied from the `yt-icon` directory to `assets/icon-youtube.png` and `assets/adaptive-icon-youtube.png` to resolve the incorrect icon bug.
+- **Fixed**: Resolved Android app relaunch lockup bug in `useYouTubeMode.js` hook by saving the preference state to AsyncStorage and adding a short delay *before* invoking the native module process-killing icon switch.
+- **Fixed**: Resolved startup validation bypass in `SplashScreen.js` by verifying the cached child session against the database on boot, logging out the session immediately if it was deleted or suspended on the server.
+- **Fixed**: Redesigned the welcome access screen (`AccessCodeScreen.js` and `AccessCodeCard.js`) by adding a custom, colorful children-learning illustration (`assets/welcome_illustration.png`) at the top of the login card and adding floating decorative glass bubbles with rich color gradients in the background to achieve premium visual depth.
+- **Added**: Node.js automated verification suite `scripts/test-tenant-isolation.js` validating the tenant isolation logic.
+
 ## 2026-07-23 — App Config Fixes: SettingsScreen Bug + BASE_URL Fixed
 - **Fixed**: `SettingsScreen.js` — `appConfig?.features` → `appConfig?.config?.features` — dark mode `enableDarkMode` config value was never respected because `features` is nested under `.config` in the context object
 - **Fixed**: `api.js` — `BASE_URL` default changed from `http://10.0.2.2:3000` (Android emulator only) to `http://localhost:3000` (works on all platforms). Custom backend WAS running on localhost:3000 but `10.0.2.2` doesn't resolve on Windows

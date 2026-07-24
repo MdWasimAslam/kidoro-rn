@@ -39,6 +39,8 @@ function setActiveChild(child) {
   // Persist to storage asynchronously (non-blocking)
   if (child) {
     storage.setItem(CHILD_KEY, JSON.stringify(child)).catch(() => {});
+  } else {
+    storage.removeItem(CHILD_KEY).catch(() => {});
   }
 }
 
@@ -84,9 +86,19 @@ async function supabaseRest(table, queryParams = {}) {
     'Content-Type': 'application/json',
   };
 
+  const params = { ...queryParams };
+
+  // Auto filter by access_key for tenant isolation
+  if (table !== 'app_config' && table !== 'profiles') {
+    const activeChild = await getActiveChild();
+    if (activeChild?.access_key) {
+      params['access_key'] = `eq.${activeChild.access_key}`;
+    }
+  }
+
   const parts = [];
-  for (const key of Object.keys(queryParams)) {
-    parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(queryParams[key]));
+  for (const key of Object.keys(params)) {
+    parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
   }
   const queryString = parts.join('&');
   const url = `${SUPABASE_URL}/rest/v1/${table}${queryString ? '?' + queryString : ''}`;

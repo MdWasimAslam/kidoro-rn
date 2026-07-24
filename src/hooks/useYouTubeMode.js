@@ -45,6 +45,12 @@ export default function useYTIcon() {
     setSwitching(true);
 
     try {
+      setShowYTIcon(next);
+      await setItem(YT_ICON_KEY, next ? 'true' : 'false');
+      
+      // Short delay to ensure AsyncStorage write commits fully before process termination
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       if (alternateAppIcons && typeof alternateAppIcons.setAlternateAppIcon === 'function') {
         if (next) {
           await alternateAppIcons.setAlternateAppIcon('YouTubeIcon');
@@ -52,8 +58,6 @@ export default function useYTIcon() {
           await alternateAppIcons.setAlternateAppIcon(null);
         }
       }
-      setShowYTIcon(next);
-      await setItem(YT_ICON_KEY, next ? 'true' : 'false');
     } catch (e) {
       // icon switch failed silently
     } finally {

@@ -15,6 +15,7 @@ async function insertToSupabase(eventPayload) {
 
   const payload = {
     parent_id: activeChild?.parent_id || null,
+    access_key: activeChild?.access_key || null,
     child_id: eventPayload.child_id || activeChild?.id || null,
     event_name: eventPayload.event_name,
     video_id: eventPayload.video_id || null,
@@ -115,6 +116,7 @@ const analyticsService = {
         },
         body: JSON.stringify(queue.map(e => ({
           parent_id: activeChild?.parent_id || null,
+          access_key: activeChild?.access_key || null,
           child_id: e.child_id || activeChild?.id || null,
           event_name: e.event_name,
           video_id: e.video_id || null,

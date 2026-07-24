@@ -32,9 +32,7 @@ const authService = {
 
   logout: async () => {
     try {
-      await storage.removeItem(TOKEN_KEY);
-      await storage.removeItem('@kidoro_refresh_token');
-      await storage.removeItem('@kidoro_child_session');
+      await storage.clear();
       setActiveChild(null); // clear in-memory cache so getActiveChild() returns null
     } catch (e) {
       // storage error, non-blocking

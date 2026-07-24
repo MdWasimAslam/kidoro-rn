@@ -19,10 +19,12 @@ const AccessCodeScreen = React.memo(function AccessCodeScreen({ navigation }) {
 
   return (
     <LinearGradient
-      colors={[COLORS.primary, COLORS.primaryDark]}
+      colors={[COLORS.primary, '#E83030', COLORS.primaryDark]}
       style={styles.container}
     >
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+      <View style={styles.bubble1} />
+      <View style={styles.bubble2} />
       <KeyboardAvoidingView
         style={styles.content}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -42,5 +44,23 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     justifyContent: 'center',
+  },
+  bubble1: {
+    position: 'absolute',
+    top: '12%',
+    left: '-10%',
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  bubble2: {
+    position: 'absolute',
+    bottom: '10%',
+    right: '-15%',
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
 });

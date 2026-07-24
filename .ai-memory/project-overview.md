@@ -12,23 +12,24 @@
 - Home screen with live backend categories, trending hero card, search
 - YouTube video player (react-native-youtube-iframe) with video playback analytics
 - TikTok-style shorts (expo-av Video) fetched live from backend
-- Favorites persisted to backend & synced locally
-- Child PIN gate (validated against `children` database table)
+- Favorites persisted locally (scoped per parent access key)
+- Child PIN gate (validated against `children` database table online with splash validation check)
 - Settings with streak tracking
 - Playlists screen
 
 ## App Flow
 ```
-Splash → AccessCode (backend validated) → MainTabs
+Splash (session validated) → AccessCode (backend validated) → MainTabs
   ├── Home → VideoPlayer, Search
   ├── Shorts
   ├── Favorites
   └── Settings → Playlists, Logout
 ```
 
-## State Management
+## State Management & Multi-Tenancy
 - `FavoritesContext` — wraps app, provides `isFavorite(id)` + `toggleFavorite(id)`
-- AsyncStorage keys: `@kidoro_favorites`, `@kidoro_streak`
+- AsyncStorage keys: `@kidoro_favorites_${accessKey}`, `@kidoro_continue_watching_${accessKey}`, `@kidoro_streak`, `@kidoro_child_session`
+- Data Isolation: Enforced on all tables via Supabase Row-Level Security (RLS) policies and automatic query parameter injection based on parent `access_key`.
 - No Redux/MobX/other state libs
 
 ## Package Management
